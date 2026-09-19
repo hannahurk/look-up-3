@@ -200,7 +200,12 @@ body.mode-art #art {
   display: block;
   animation: fc-in 0.8s ease backwards;
 }
-.key-screen .fc-date { font-size: clamp(14px, min(2.4vw, 4vh), 34px); }
+.key-screen .fc-date {
+  margin-bottom: 0.2em;
+  font-size: clamp(18px, min(3.4vw, 5.6vh), 52px);
+  font-weight: 500;
+  color: var(--amber);
+}
 .key-screen .fc-cond { font-size: clamp(30px, min(6.4vw, 11vh), 100px); }
 .key-screen .fc-row { font-size: clamp(16px, min(2.6vw, 4.4vh), 40px); }
 
@@ -250,13 +255,17 @@ body.mode-art .grain {
 .key-glyph {
   flex: none;
   display: block;
+  position: relative;
 }
 
+/* A shooting star: a fading tail and a bright head, like the streaks in the art. */
 .key-glyph.is-streak {
-  width: 1.1em;
-  height: 0.09em;
-  border-radius: 0.05em;
-  background: linear-gradient(90deg, rgba(250, 250, 255, 0), #fafaff);
+  width: 1.2em;
+  height: 0.18em;
+  border-radius: 0.09em;
+  background:
+    radial-gradient(circle at calc(100% - 0.09em) 50%, #f7efd9 0 0.09em, transparent 0.1em),
+    linear-gradient(90deg, rgba(247, 239, 217, 0), #f7efd9);
   transform: rotate(-20deg);
 }
 
@@ -267,21 +276,34 @@ body.mode-art .grain {
   background: radial-gradient(circle, #63b3ff 0%, rgba(99, 179, 255, 0.4) 55%, rgba(99, 179, 255, 0) 72%);
 }
 
+/* Solar wind: short pale-blue dashes, like the streaks flowing out of the core. */
 .key-glyph.is-wind {
-  width: 0.2em;
-  height: 0.2em;
-  margin-right: 0.7em;
-  border-radius: 50%;
-  background: #a8d1ff;
-  box-shadow: 0.36em 0 0 -0.03em rgba(168, 209, 255, 0.7), 0.7em 0 0 -0.06em rgba(168, 209, 255, 0.4);
+  width: 1.2em;
+  height: 0.1em;
+  border-radius: 0.05em;
+  background: repeating-linear-gradient(90deg, #a8d1ff 0 0.24em, transparent 0.24em 0.44em);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 35%);
+  mask-image: linear-gradient(90deg, transparent, #000 35%);
 }
 
+/* Orbiting dot: a dot riding an orbit line, like the asteroids in the art. */
 .key-glyph.is-orbit {
-  width: 0.5em;
-  height: 0.5em;
+  width: 1.2em;
+  height: 0.6em;
+  border-radius: 50%;
+  border: 0.07em solid rgba(250, 250, 255, 0.55);
+}
+
+.key-glyph.is-orbit::after {
+  content: '';
+  position: absolute;
+  right: -0.06em;
+  top: 0.02em;
+  width: 0.28em;
+  height: 0.28em;
   border-radius: 50%;
   background: #63b3ff;
-  box-shadow: 0 0 0 0.12em rgba(99, 179, 255, 0.3);
+  box-shadow: 0 0 0 0.08em rgba(99, 179, 255, 0.3);
 }
 
 /* An arc, like the expanding rings in the art. */
@@ -293,6 +315,12 @@ body.mode-art .grain {
   border-top-color: #c896ff;
   border-right-color: #c896ff;
   transform: rotate(-20deg);
+}
+
+/* Amber when an eruption is predicted to reach Earth, as in the art. */
+.key-glyph.is-ring.is-warn {
+  border-top-color: var(--amber);
+  border-right-color: var(--amber);
 }
 
 /* A green glow fading downward, like the aurora hanging from the top of the art. */

@@ -241,7 +241,7 @@
     if (sw && status.cmes === 'live' && Array.isArray(latestData.cmes)) {
       const heading = latestData.cmes.filter((c) => c.earth === 'predicted').length;
       cards.push({
-        label: 'Coronal mass ejections', glyph: 'ring',
+        label: 'Coronal mass ejections', glyph: 'ring', glyphWarn: heading > 0,
         value: sw.cmeCount === 0 ? 'None This Week' : `${plural(sw.cmeCount, 'Ejection', 'Ejections')} This Week`,
         rows: sw.cmeCount === 0 ? [] : [
           ['Rings shown', String(latestData.cmes.length)],
@@ -300,7 +300,7 @@
         const cond = document.createElement('div');
         cond.className = 'fc-cond';
         const glyph = document.createElement('span');
-        glyph.className = 'key-glyph is-' + c.glyph;
+        glyph.className = 'key-glyph is-' + c.glyph + (c.glyphWarn ? ' is-warn' : '');
         glyph.setAttribute('aria-hidden', 'true');
         cond.append(glyph, c.value);
         card.appendChild(cond);
