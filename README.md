@@ -1,6 +1,6 @@
 # Space, Translated
 
-A ceiling sign that cycles through five full-screen views of live NASA and NOAA data: today's Astronomy Picture of the Day, a space-weather readout, a three-day space weather forecast, a live Earth image, and "Algorithm Art" — a generative canvas piece that translates the same live space-weather and near-Earth-object data into slow, ambient motion (not a dashboard, not a literal solar-system diagram).
+A ceiling sign that cycles through six full-screen views of live NASA and NOAA data: today's Astronomy Picture of the Day, a space-weather readout, a three-day space weather forecast, a live Earth image, a plain-language key to the artwork, and "Algorithm Art" — a generative canvas piece that translates the same live space-weather and near-Earth-object data into slow, ambient motion (not a dashboard, not a literal solar-system diagram).
 
 ## What's driving it
 
@@ -14,14 +14,15 @@ A Vercel serverless function (`api/nasa-data.js`) is the only thing that holds t
 
 Some sources don't need a key at all, so `app.js` fetches them directly: [NASA's EPIC API](https://epic.gsfc.nasa.gov/) (Earth imagery) and [NOAA SWPC](https://www.swpc.noaa.gov/) (real-time solar wind, the Kp index, and NOAA's three-day space weather scales forecast). The browser never talks to `api.nasa.gov` itself — only `/api/nasa-data`, EPIC, and NOAA.
 
-## The five screens
+## The six screens
 
-Each time the sign wakes from idle (not on every twitch while already awake), or a camera detects a new visitor after a few seconds of stillness, it advances: **APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth image → Algorithm Art → back to APOD.**
+Each time the sign wakes from idle (not on every twitch while already awake), or a camera detects a new visitor after a few seconds of stillness, it advances: **APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth image → Artwork key → Algorithm Art → back to APOD.**
 
 - **APOD** — full-bleed image or video, whichever NASA published today.
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
 - **Space Weather Forecast** — a TV-weather-style report. NOAA's official three-day forecast becomes three day cards (calm to storm, plus the chance of radio blackouts and radiation storms), followed by a short script: what the solar wind and Kp index are doing right now, what's forecast, and a recap of the past week from NASA DONKI. Every sentence is a fixed template filled with live numbers and is simply left out if its data is missing, so nothing is invented.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
+- **Artwork key ("Today's sky, translated")** — shown just before the art, in the same plain weather-report voice: what the shooting stars, glowing core and orbiting dots mean right now, with the live numbers behind each (Kp, flare and CME counts, strongest flare, asteroids today) and NOAA's forecast headline. A line is skipped if its data source isn't live.
 - **Algorithm Art** — see below.
 
 ## How the data reads as motion (Algorithm Art)
@@ -47,9 +48,9 @@ Every screen keeps running on whatever it last had (or a quiet neutral default o
 
 ## Files
 
-- `index.html` — markup for all five screens plus the canvas and status dot
+- `index.html` — markup for all six screens plus the canvas and status dot
 - `style.css` — full-viewport layout, the weather "stat screen" style, the canvas/grain styling, and the mode-switching + idle/wake transitions
-- `app.js` — fetches and renders APOD, EPIC, solar wind, and Cosmic Meteorology; runs the Algorithm Art generative engine; and drives the five-way idle/wake cycle
+- `app.js` — fetches and renders APOD, EPIC, solar wind, and Cosmic Meteorology; runs the Algorithm Art generative engine; and drives the six-way idle/wake cycle
 - `api/nasa-data.js` — the Vercel serverless function that fetches and normalizes APOD, NEO, and DONKI data
 
 No React, TypeScript, build tooling, or npm packages — plain HTML/CSS/JS, deployed as-is.

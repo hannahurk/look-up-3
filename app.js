@@ -431,6 +431,56 @@
       p.append(label, ' ' + outlook);
       reportEl.appendChild(p);
     }
+    paintArtKey();
+  }
+
+  // The artwork key slide: says what each visual element is showing, using
+  // the same numbers that drive it. A line is skipped when its source isn't
+  // live, so the key never claims "quiet" for data it doesn't have.
+  function paintArtKey() {
+    const list = document.getElementById('key-list');
+    if (!list) return;
+
+    const sw = latestData && latestData.spaceWeather;
+    const status = (latestData && latestData.sourceStatus) || {};
+    const rows = [];
+
+    if (sw && status.storms === 'live') {
+      const intensity = sw.geomagneticIntensity || 0;
+      const feel = intensity < 0.15 ? 'small and slow' : intensity < 0.6 ? 'medium-sized and moderately quick' : 'long, fast and thick';
+      const storm = sw.kpIndex > 0 ? `this week’s storm peaked at Kp ${sw.kpIndex}` : 'no geomagnetic storm was logged this week';
+      rows.push(['streak', `Shooting stars are ${feel}. Their size and speed follow geomagnetic activity, and ${storm}.`]);
+    }
+    if (sw && status.flares === 'live' && status.cmes === 'live') {
+      rows.push(['streak', `More space-weather events mean more shooting stars: ${plural(sw.flareCount, 'solar flare', 'solar flares')} and ${plural(sw.cmeCount, 'coronal mass ejection', 'coronal mass ejections')} this week.`]);
+    }
+    if (sw && status.flares === 'live') {
+      const strongest = strongestFlareClass(sw.flareIntensity);
+      rows.push(['core', strongest
+        ? `The glowing core is the Sun, brighter with flare strength. This week’s strongest flare was ${/^[AMX]/.test(strongest) ? 'an' : 'a'} ${strongest}.`
+        : 'The glowing core is the Sun. No flares this week, so it glows at its calmest.']);
+    }
+    if (status.neo === 'live' && latestData.asteroids) {
+      const count = latestData.asteroids.length;
+      const hazardous = latestData.asteroids.filter((a) => a.hazardous).length;
+      rows.push(['orbit', count === 0
+        ? 'No asteroids are on today’s close-approach list.'
+        : `Each orbiting dot is an asteroid passing Earth today: bigger dot, bigger rock; faster orbit, faster flyby; wider orbit, farther miss.${hazardous ? ` ${hazardous === 1 ? 'One is' : hazardous + ' are'} tinted amber as potentially hazardous.` : ''}`]);
+    }
+    const days = forecastDays();
+    if (days.length) {
+      const headline = forecastHeadline(days);
+      rows.push(['forecast', `NOAA’s three-day forecast: ${headline.charAt(0).toLowerCase()}${headline.slice(1)}.`]);
+    }
+
+    list.textContent = '';
+    rows.forEach(([kind, text], i) => {
+      const li = document.createElement('li');
+      li.className = 'key-item is-' + kind;
+      li.style.setProperty('--i', i);
+      li.textContent = text;
+      list.appendChild(li);
+    });
   }
 
   // ---------- unified NASA data (APOD, space weather, NEO) ----------
@@ -789,12 +839,12 @@
   // trigger for the install; mouse/touch/keyboard activity stays as a
   // fallback for desks and testing. Each time the sign wakes from idle it
   // cycles to the next screen: APOD photo → Cosmic Meteorology → Space Weather
-  // Forecast → EPIC Earth image → Algorithm Art → back to APOD. Camera motion after a quiet gap
+  // Forecast → EPIC Earth image → Artwork key → Algorithm Art → back to APOD. Camera motion after a quiet gap
   // counts as a new visitor and advances the screen even if the sign hasn't
   // gone idle yet.
 
   const IDLE_TIMEOUT_MS = 8000;
-  const MODE_ORDER = ['apod', 'wx', 'forecast', 'epic', 'art'];
+  const MODE_ORDER = ['apod', 'wx', 'forecast', 'epic', 'key', 'art'];
   let idleTimer;
   let mode = 'apod';
 
@@ -812,7 +862,7 @@
 
   function toggleMode() {
     mode = MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length];
-    document.body.classList.remove('mode-wx', 'mode-forecast', 'mode-epic', 'mode-art');
+    document.body.classList.remove('mode-wx', 'mode-forecast', 'mode-key', 'mode-epic', 'mode-art');
     if (mode !== 'apod') document.body.classList.add('mode-' + mode);
   }
 

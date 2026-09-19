@@ -30,7 +30,7 @@ body {
 /* ---- mode switching ----
    Exactly one of these full-bleed layers is visible at a time: the APOD
    photo/video, the weather screen, the space weather forecast, the EPIC
-   Earth image, or the generative artwork. Each wake-from-idle cycles to the next one (app.js). */
+   Earth image, the artwork key, or the generative artwork itself. Each wake-from-idle cycles to the next one (app.js). */
 
 .oculus,
 .epic-screen,
@@ -43,9 +43,10 @@ body {
   transition: opacity 1.2s ease, filter 1.2s ease;
 }
 
-body:not(.mode-wx):not(.mode-forecast):not(.mode-epic):not(.mode-art) .oculus,
+body:not(.mode-wx):not(.mode-forecast):not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
 body.mode-wx .stat-screen#wx-screen,
 body.mode-forecast .stat-screen#forecast-screen,
+body.mode-key .stat-screen#key-screen,
 body.mode-epic .epic-screen,
 body.mode-art #art {
   opacity: 1;
@@ -59,10 +60,11 @@ body.mode-art #art {
    non-APOD mode doesn't let the (still opacity-0.32'd) photo ghost through
    underneath it. */
 
-body.is-idle:not(.mode-wx):not(.mode-forecast):not(.mode-epic):not(.mode-art) .oculus,
+body.is-idle:not(.mode-wx):not(.mode-forecast):not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
 body.is-idle.mode-epic .epic-screen,
 body.is-idle.mode-wx .stat-screen#wx-screen,
-body.is-idle.mode-forecast .stat-screen#forecast-screen {
+body.is-idle.mode-forecast .stat-screen#forecast-screen,
+body.is-idle.mode-key .stat-screen#key-screen {
   opacity: 0.32;
   filter: saturate(0.55);
   animation: breathe 5s ease-in-out infinite;
@@ -86,10 +88,11 @@ body.is-idle.mode-art #art {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.is-idle:not(.mode-wx):not(.mode-forecast):not(.mode-epic):not(.mode-art) .oculus,
+  body.is-idle:not(.mode-wx):not(.mode-forecast):not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
   body.is-idle.mode-epic .epic-screen,
   body.is-idle.mode-wx .stat-screen#wx-screen,
   body.is-idle.mode-forecast .stat-screen#forecast-screen,
+  body.is-idle.mode-key .stat-screen#key-screen,
   body.is-idle.mode-art #art {
     animation: none;
   }
@@ -410,6 +413,78 @@ body.mode-forecast .fc-report p {
 
 body.mode-art .grain {
   opacity: 0.05;
+}
+
+/* ---- Artwork key ("Today's sky, translated") ----
+   Its own slide, shown just before the artwork: the same plain weather-report
+   voice as the forecast, saying what each part of the art means right now. */
+
+.key-screen { padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 48px); }
+
+.key-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: clamp(16px, min(2vw, 3.1vh), 30px);
+  line-height: 1.45;
+}
+
+.key-item {
+  display: grid;
+  grid-template-columns: 2.6em 1fr;
+  gap: 0.6em;
+  align-items: start;
+  margin-bottom: clamp(10px, 1.8vh, 22px);
+  color: #e3e6ee;
+}
+
+.key-item::before {
+  content: '';
+  display: block;
+  justify-self: center;
+  margin-top: 0.5em;
+}
+
+.key-item.is-streak::before {
+  width: 2.2em;
+  height: 0.2em;
+  border-radius: 0.1em;
+  background: linear-gradient(90deg, rgba(250, 250, 255, 0), #fafaff);
+  transform: rotate(-20deg);
+}
+
+.key-item.is-core::before {
+  width: 1.4em;
+  height: 1.4em;
+  margin-top: 0.1em;
+  border-radius: 50%;
+  background: radial-gradient(circle, #63b3ff 0%, rgba(99, 179, 255, 0.35) 55%, rgba(99, 179, 255, 0) 72%);
+}
+
+.key-item.is-orbit::before {
+  width: 0.9em;
+  height: 0.9em;
+  margin-top: 0.3em;
+  border-radius: 50%;
+  background: #63b3ff;
+  box-shadow: 0 0 0 0.22em rgba(99, 179, 255, 0.3);
+}
+
+.key-item.is-forecast::before {
+  width: 0.7em;
+  height: 0.7em;
+  margin-top: 0.4em;
+  background: var(--amber);
+  transform: rotate(45deg);
+}
+
+body.mode-key .key-item {
+  animation: fc-in 0.8s ease backwards;
+  animation-delay: calc(var(--i, 0) * 0.5s + 0.3s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.mode-key .key-item { animation: none; }
 }
 
 /* ---- status dot ----
