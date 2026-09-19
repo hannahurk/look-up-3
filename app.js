@@ -1,6 +1,6 @@
 // Space, Translated — a ceiling sign cycling through NASA's Astronomy
-// Picture of the Day, space weather, a space weather forecast, a live Earth
-// image, and a generative canvas reading of the same live data ("Algorithm Art").
+// Picture of the Day, space weather, a live Earth image, a key to the
+// artwork, and a generative canvas reading of the same live data ("Algorithm Art").
 //
 // /api/nasa-data (a serverless proxy holding the real NASA key) supplies
 // APOD, space weather, and near-Earth objects. EPIC and NOAA solar wind
@@ -150,7 +150,7 @@
 
   // ---------- Solar wind (NOAA SWPC — near-real-time, no key required) ----------
 
-  let latestWind = null; // { kms, mph } — latest solar wind speed; drives the art and the key slide
+  let latestWind = null; // { kms, mph, bz } — latest solar wind speed and field tilt; drives the art and the key slide
 
   async function loadSolarWind() {
     try {
@@ -176,10 +176,10 @@
 
     const mph = Math.round(speed.proton_speed * KM_S_TO_MPH);
     document.getElementById('wind-speed').textContent = mph.toLocaleString('en-US');
-    latestWind = { kms: Number(speed.proton_speed), mph };
+    const bz = mag.bz_gsm;
+    latestWind = { kms: Number(speed.proton_speed), mph, bz: Number(bz) };
     paintArtKey();
 
-    const bz = mag.bz_gsm;
     document.getElementById('wind-bz').textContent = (bz > 0 ? '+' : '') + bz;
     const isSouth = bz < -2; // southward field: more likely to spark aurora
     card.classList.toggle('is-south', isSouth);
@@ -205,56 +205,7 @@
     document.getElementById('wx-alert').textContent = text;
   }
 
-  // ---------- Space Weather Forecast (NOAA SWPC) ----------
-  //
-  // NOAA publishes an official 3-day forecast on its space weather scales
-  // (G = geomagnetic storms, R = radio blackouts, S = radiation storms). The
-  // slide shows those as three day cards.
-
-  const SCALES_URL = 'https://services.swpc.noaa.gov/products/noaa-scales.json';
-  const FORECAST_REFRESH_MS = 30 * 60 * 1000;
-  const G_NAMES = ['Calm', 'Minor storm', 'Moderate storm', 'Strong storm', 'Severe storm', 'Extreme storm'];
-
-  let noaaScales = null; // NOAA's 3-day scales forecast
-
-  async function loadForecast() {
-    try {
-      const res = await fetch(SCALES_URL);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      noaaScales = await res.json();
-    } catch (err) {
-      console.error('NOAA scales fetch failed:', err);
-    }
-    paintForecast();
-  }
-
-  function toInt(v) {
-    const n = parseInt(v, 10);
-    return Number.isFinite(n) ? n : null;
-  }
-
-  function forecastDays() {
-    if (!noaaScales) return [];
-    return ['1', '2', '3']
-      .map((key) => noaaScales[key])
-      .filter((d) => d && d.DateStamp)
-      .map((d) => ({
-        date: d.DateStamp,
-        g: toInt(d.G && d.G.Scale) || 0,
-        rMinor: toInt(d.R && d.R.MinorProb),
-        rMajor: toInt(d.R && d.R.MajorProb),
-        s: toInt(d.S && d.S.Prob),
-      }));
-  }
-
-  function dayName(dateStamp) {
-    return new Date(dateStamp + 'T00:00:00Z').toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC',
-    });
-  }
+  // ---------- small formatting helpers ----------
 
   function strongestFlareClass(intensity) {
     if (!(intensity > 0)) return null;
@@ -269,138 +220,8 @@
     return `${n} ${n === 1 ? one : many}`;
   }
 
-  function paintForecast() {
-    const days = forecastDays();
-    const daysEl = document.getElementById('fc-days');
-    if (daysEl) {
-      daysEl.textContent = '';
-      if (days.length === 0) {
-        const empty = document.createElement('p');
-        empty.className = 'fc-empty';
-        empty.textContent = 'Forecast unavailable right now';
-        daysEl.appendChild(empty);
-      }
-      days.forEach((d, i) => {
-        const card = document.createElement('div');
-        card.className = 'fc-day';
-        card.dataset.g = String(Math.min(d.g, 5));
-        card.style.setProperty('--i', i);
-
-        const date = document.createElement('div');
-        date.className = 'fc-date';
-        date.textContent = dayName(d.date);
-
-        const cond = document.createElement('div');
-        cond.className = 'fc-cond';
-        const dot = document.createElement('span');
-        dot.className = 'fc-dot';
-        dot.setAttribute('aria-hidden', 'true');
-        cond.append(dot, G_NAMES[Math.min(d.g, 5)]);
-
-        card.append(date, cond);
-        [
-          ['Radio blackout', d.rMinor],
-          ['Radiation storm', d.s],
-        ].forEach(([label, value]) => {
-          if (value === null) return;
-          const row = document.createElement('div');
-          row.className = 'fc-row';
-          const name = document.createElement('span');
-          name.textContent = label + ' chance';
-          const pct = document.createElement('b');
-          pct.textContent = value + '%';
-          row.append(name, pct);
-          card.appendChild(row);
-        });
-        daysEl.appendChild(card);
-      });
-    }
-    paintCMEs();
-    paintArtKey();
-  }
-
-  // Coronal mass ejections under the forecast cards: one card per recent
-  // eruption from the live data feed. Hidden unless that source is live, so
-  // "no ejections" is only ever shown when we actually looked.
-  function utcDay(iso) {
-    const d = new Date(iso);
-    if (!iso || Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
-  }
-
-  function utcStamp(iso) {
-    const d = new Date(iso);
-    if (!iso || Number.isNaN(d.getTime())) return '—';
-    const text = d.toLocaleString('en-US', {
-      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC',
-    });
-    return `${text} UTC`;
-  }
-
-  function paintCMEs() {
-    const section = document.getElementById('fc-cme');
-    const box = document.getElementById('cme-cards');
-    if (!section || !box) return;
-
-    const live = latestData && latestData.sourceStatus && latestData.sourceStatus.cmes === 'live' && Array.isArray(latestData.cmes);
-    section.hidden = !live;
-    box.textContent = '';
-    if (!live) return;
-
-    if (latestData.cmes.length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'fc-empty';
-      empty.textContent = 'None this week';
-      box.appendChild(empty);
-      return;
-    }
-
-    latestData.cmes.forEach((c, i) => {
-      const card = document.createElement('div');
-      card.className = 'fc-day';
-      // Same dot colors as the forecast cards: slower is calmer.
-      card.dataset.g = c.speed === null ? '0' : c.speed < 500 ? '0' : c.speed < 1000 ? '1' : c.speed < 2000 ? '2' : '3';
-      card.style.setProperty('--i', i + 3);
-
-      const date = document.createElement('div');
-      date.className = 'fc-date';
-      date.textContent = utcDay(c.startTime);
-
-      const cond = document.createElement('div');
-      cond.className = 'fc-cond';
-      const dot = document.createElement('span');
-      dot.className = 'fc-dot';
-      dot.setAttribute('aria-hidden', 'true');
-      cond.append(dot, c.speed === null ? 'Speed n/a' : `${Math.round(c.speed).toLocaleString('en-US')} km/s`);
-      card.append(date, cond);
-
-      const rows = [];
-      if (c.earth === 'predicted') {
-        rows.push(['Earth impact', c.glancing ? 'Glancing blow' : 'Predicted', true]);
-        if (c.arrivalTime) {
-          const passed = new Date(c.arrivalTime).getTime() < Date.now();
-          rows.push([passed ? 'Est. arrival (past)' : 'Est. arrival', utcStamp(c.arrivalTime)]);
-        }
-      } else {
-        rows.push(['Earth impact', c.earth === 'not-expected' ? 'Not expected' : 'Not modeled']);
-      }
-      rows.forEach(([name, value, warn]) => {
-        const row = document.createElement('div');
-        row.className = 'fc-row' + (warn ? ' is-warn' : '');
-        const n = document.createElement('span');
-        n.textContent = name;
-        const v = document.createElement('b');
-        v.textContent = value;
-        row.append(n, v);
-        card.appendChild(row);
-      });
-      box.appendChild(card);
-    });
-  }
-
-  // The artwork key slide: three cards, in the same style as the forecast
-  // cards, showing what each part of the artwork is doing right now. A card
-  // or row is skipped when its source isn't live, so the key never claims
+  // The artwork key slide: one card per element of the artwork, showing what
+  // it's doing right now. A card or row is skipped when its source isn't live, so the key never claims
   // "quiet" for data it doesn't have.
   function paintArtKey() {
     const box = document.getElementById('key-cards');
@@ -428,6 +249,24 @@
         label: 'Solar wind', glyph: 'wind',
         value: `${latestWind.mph.toLocaleString('en-US')} mph`,
         rows: [['Streaming pace', pace]],
+      });
+    }
+    if (sw && status.cmes === 'live' && Array.isArray(latestData.cmes)) {
+      const heading = latestData.cmes.filter((c) => c.earth === 'predicted').length;
+      cards.push({
+        label: 'Coronal mass ejections', glyph: 'ring',
+        value: sw.cmeCount === 0 ? 'None this week' : `${plural(sw.cmeCount, 'ejection', 'ejections')} this week`,
+        rows: sw.cmeCount === 0 ? [] : [
+          ['Rings shown', String(latestData.cmes.length)],
+          ['Heading for Earth', String(heading), heading > 0],
+        ],
+      });
+    }
+    if (latestWind && Number.isFinite(latestWind.bz)) {
+      cards.push({
+        label: 'Aurora glow', glyph: 'aurora',
+        value: latestWind.bz < -2 ? 'Aurora watch' : 'Quiet',
+        rows: [['Magnetic field tilt (Bz)', `${latestWind.bz > 0 ? '+' : ''}${latestWind.bz} nT`]],
       });
     }
     if (sw && status.flares === 'live') {
@@ -510,7 +349,7 @@
   // Smoothed, currently-displayed values feeding the artwork — these ease
   // toward latestData's numbers rather than jumping, so a data refresh
   // never looks abrupt.
-  const shown = { flareIntensity: 0, geomagneticIntensity: 0, windKms: 400 };
+  const shown = { flareIntensity: 0, geomagneticIntensity: 0, windKms: 400, aurora: 0 };
 
   function isAnyLive(sourceStatus) {
     return Object.values(sourceStatus).some((s) => s === 'live');
@@ -535,9 +374,10 @@
       const data = await res.json();
       latestData = data;
       rebuildOrbits(data.asteroids || []);
+      rebuildCMERings(data.cmes);
       renderAPOD(data.apod);
       renderSpaceWeatherSummary(data.spaceWeather);
-      paintForecast();
+      paintArtKey();
     } catch (err) {
       // Keep whatever we last had (or the fallback) and just reflect the
       // degraded state in the status dot — the sign keeps running. Only
@@ -559,13 +399,19 @@
   let orbits = [];
   let fineParticles = [];
   let windParticles = [];
+  let cmeRings = [];
 
-  // Verified against the --ink background (rgb(10,11,14)): all of these
-  // clear 7.5:1, well past the 3:1 WCAG non-text contrast minimum.
+  // WCAG non-text contrast (1.4.11): every meaningful mark clears 3:1 against
+  // the --ink background (rgb(10,11,14)) at its *blended* strength, not just
+  // at full color. The alphas chosen for orbit lines, the core, the aurora, the
+  // CME arcs and the wind streaks are the ones that keep it there. Twinkling
+  // background stars and soft halos are decorative.
   const palette = {
     core: [99, 179, 255],
     amber: [251, 191, 36],
     star: [250, 250, 255],
+    aurora: [110, 235, 170],
+    cme: [200, 150, 255],
   };
 
   function mix(c1, c2, t) {
@@ -682,7 +528,7 @@
     const intensity = shown.flareIntensity;
     const normalized = clamp(logMapRange(intensity, 1, 10000, 0, 1), 0, 1);
     const radius = mapRange(normalized, 0, 1, Math.min(width, height) * 0.06, Math.min(width, height) * 0.11);
-    const brightness = mapRange(normalized, 0, 1, 0.4, 0.7);
+    const brightness = mapRange(normalized, 0, 1, 0.6, 0.85);
     const breathe = 1 + Math.sin(t * 0.12) * 0.04;
 
     const color = elevated ? mix(palette.core, palette.amber, 0.22) : palette.core;
@@ -722,8 +568,8 @@
       ctx.beginPath();
       ctx.arc(0, 0, orbit.radius, 0, Math.PI * 2);
       ctx.strokeStyle = orbit.hazardous && elevated
-        ? rgba(palette.amber, 0.5)
-        : rgba(palette.star, 0.32);
+        ? rgba(palette.amber, 0.55)
+        : rgba(palette.star, 0.45);
       ctx.lineWidth = 3 * ui;
       ctx.stroke();
       ctx.restore();
@@ -822,7 +668,7 @@
         p.t = 0;
         p.angle = Math.random() * Math.PI * 2;
       }
-      const alpha = 0.9 * Math.min(p.t / 0.08, 1) * (1 - Math.max((p.t - 0.7) / 0.3, 0));
+      const alpha = 0.9 * Math.min(p.t / 0.05, 1) * (1 - Math.max((p.t - 0.88) / 0.12, 0));
       if (alpha <= 0) continue;
       const r = startR + p.t * span;
       const dx = Math.cos(p.angle);
@@ -835,6 +681,85 @@
       ctx.stroke();
     }
     ctx.lineCap = 'butt';
+  }
+
+  // Coronal mass ejections: each recent eruption is a wide, soft arc that
+  // expands outward from the core, like a cloud thrown off the Sun. A faster
+  // eruption crosses the screen sooner. Ones predicted to reach Earth are amber.
+  function rebuildCMERings(cmes) {
+    const list = Array.isArray(cmes) ? cmes : [];
+    cmeRings = list.map((c, i) => {
+      const rand = makeRandom(hashString(String(c.startTime || i)));
+      return {
+        t: i / Math.max(list.length, 1), // staggered so they don't all start together
+        angle: rand() * Math.PI * 2,
+        half: 0.6 + rand() * 0.4,
+        kms: c.speed || 600,
+        earth: c.earth === 'predicted',
+      };
+    });
+  }
+
+  function drawCMEs(dt, center) {
+    if (cmeRings.length === 0) return;
+    const startR = Math.min(width, height) * 0.08;
+    const endR = Math.hypot(Math.max(center.x, width - center.x), Math.max(center.y, height - center.y));
+
+    ctx.lineCap = 'round';
+    for (const ring of cmeRings) {
+      const period = mapRange(ring.kms, 300, 2000, 1700, 500); // frames to cross the screen
+      ring.t += (dt / period) * (reduceMotion ? 0.15 : 1);
+      if (ring.t >= 1) ring.t -= 1;
+
+      const alpha = 0.8 * Math.min(ring.t / 0.06, 1) * (1 - Math.max((ring.t - 0.85) / 0.15, 0));
+      if (alpha <= 0) continue;
+      const color = ring.earth ? palette.amber : palette.cme;
+      const r = startR + ring.t * (endR - startR);
+      const a0 = ring.angle - ring.half;
+      const a1 = ring.angle + ring.half;
+
+      ctx.strokeStyle = rgba(color, alpha * 0.3);
+      ctx.lineWidth = (8 + ring.t * 16) * ui;
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, r, a0, a1);
+      ctx.stroke();
+
+      ctx.strokeStyle = rgba(color, alpha);
+      ctx.lineWidth = (2.5 + ring.t * 2.5) * ui;
+      ctx.beginPath();
+      ctx.arc(center.x, center.y, r, a0, a1);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+
+  // Aurora watch: when the solar wind's magnetic field tilts south (Bz below
+  // -2 nT, the same test as the weather screen's badge), a green glow with
+  // swaying edges hangs from the top of the sky. The further south, the
+  // stronger and deeper it gets.
+  function drawAurora(t) {
+    const a = shown.aurora;
+    if (a < 0.02) return;
+    const maxH = height * (0.16 + 0.16 * a);
+    const step = Math.max(8, Math.round(width / 120));
+
+    const topAlpha = mapRange(a, 0.35, 1, 0.55, 0.9);
+    for (let layer = 0; layer < 2; layer++) {
+      const color = layer === 0 ? palette.aurora : mix(palette.aurora, palette.core, 0.55);
+      const gradient = ctx.createLinearGradient(0, 0, 0, maxH);
+      gradient.addColorStop(0, rgba(color, topAlpha));
+      gradient.addColorStop(1, rgba(color, 0));
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      for (let x = 0; x <= width + step; x += step) {
+        const sway = 0.55 + 0.3 * Math.sin(x * 0.011 + t * 1.4 + layer * 2) + 0.15 * Math.sin(x * 0.027 - t * 0.9);
+        ctx.lineTo(x, maxH * (layer ? 0.7 : 1) * sway);
+      }
+      ctx.lineTo(width + step, 0);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
 
   function drawParticles(elevated) {
@@ -867,6 +792,8 @@
     shown.flareIntensity = lerp(shown.flareIntensity, latestData.spaceWeather.flareIntensity, 0.01);
     shown.geomagneticIntensity = lerp(shown.geomagneticIntensity, latestData.spaceWeather.geomagneticIntensity, 0.01);
     if (latestWind) shown.windKms = lerp(shown.windKms, latestWind.kms, 0.01);
+    const auroraTarget = latestWind && latestWind.bz < -2 ? mapRange(-latestWind.bz, 2, 12, 0.35, 1) : 0;
+    shown.aurora = lerp(shown.aurora, auroraTarget, 0.02);
     const eventDensityTarget =
       latestData.spaceWeather.flareCount + latestData.spaceWeather.cmeCount + (latestData.spaceWeather.kpIndex > 0 ? 6 : 0);
     shown.eventDensity = lerp(shown.eventDensity || 0, mapRange(eventDensityTarget, 0, 30, 1, 16), 0.01);
@@ -878,7 +805,9 @@
 
     drawBackdrop();
     drawStars(clock * 40);
+    drawAurora(clock);
     drawWind(dt, center);
+    drawCMEs(dt, center);
     drawParticles(elevated);
     drawCore(clock * 40, center, elevated);
     drawOrbits(center, elevated);
@@ -890,21 +819,21 @@
   // ---------- slide cycle ----------
   //
   // Each slide holds for SLIDE_DWELL_MS, then the sign moves to the next one:
-  // APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth
-  // image → Artwork key → Algorithm Art → back to APOD. Movement cuts in
+  // APOD photo → Cosmic Meteorology → EPIC Earth image → Artwork key →
+  // Algorithm Art → back to APOD. Movement cuts in
   // early: when the camera (see startCameraMotion) sees a new visitor — motion
   // after a few seconds of stillness — the sign advances right away and the
   // timer restarts. Continuous movement doesn't skip screens. Mouse/touch/
   // keyboard activity counts as movement too, for desks and testing.
 
   const SLIDE_DWELL_MS = 15000; // every slide holds at least this long unless a visitor arrives
-  const MODE_ORDER = ['apod', 'wx', 'forecast', 'epic', 'key', 'art'];
+  const MODE_ORDER = ['apod', 'wx', 'epic', 'key', 'art'];
   let dwellTimer;
   let mode = 'apod';
 
   function advance() {
     mode = MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length];
-    document.body.classList.remove('mode-wx', 'mode-forecast', 'mode-key', 'mode-epic', 'mode-art');
+    document.body.classList.remove('mode-wx', 'mode-key', 'mode-epic', 'mode-art');
     if (mode !== 'apod') document.body.classList.add('mode-' + mode);
     clearTimeout(dwellTimer);
     dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);
@@ -997,11 +926,9 @@
 
   loadEPIC();
   loadSolarWind();
-  loadForecast();
   fetchData();
   setInterval(loadEPIC, REFRESH_MS);
   setInterval(loadSolarWind, WIND_REFRESH_MS);
-  setInterval(loadForecast, FORECAST_REFRESH_MS);
   setInterval(fetchData, REFRESH_MS);
   startSlideCycle();
   startCameraMotion();

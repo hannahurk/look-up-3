@@ -29,8 +29,8 @@ body {
 
 /* ---- mode switching ----
    Exactly one of these full-bleed layers is visible at a time: the APOD
-   photo/video, the weather screen, the space weather forecast, the EPIC
-   Earth image, the artwork key, or the generative artwork itself. They cross-fade
+   photo/video, the weather screen, the EPIC Earth image, the artwork key,
+   or the generative artwork itself. They cross-fade
    on a timer, or sooner when the camera sees a new visitor (app.js). */
 
 .oculus,
@@ -44,9 +44,8 @@ body {
   transition: opacity 1.2s ease;
 }
 
-body:not(.mode-wx):not(.mode-forecast):not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
+body:not(.mode-wx):not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
 body.mode-wx .stat-screen#wx-screen,
-body.mode-forecast .stat-screen#forecast-screen,
 body.mode-key .stat-screen#key-screen,
 body.mode-epic .epic-screen,
 body.mode-art #art {
@@ -220,11 +219,10 @@ body.mode-art #art {
   .stat-card { max-width: 100%; }
 }
 
-/* ---- Space Weather Forecast ----
-   Just the heading and three day cards. The heading is the shared orange
-   all-caps H1 (.stat-label). */
-
-.forecast-screen { padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 48px); }
+/* ---- Cards ----
+   Shared by the artwork key slide: a mono caps label, an icon plus one bold
+   word, and single-line rows. The heading is the shared orange all-caps H1
+   (.stat-label). */
 
 .fc {
   width: 100%;
@@ -270,22 +268,6 @@ body.mode-art #art {
   line-height: 1.1;
 }
 
-.fc-dot {
-  flex: none;
-  width: 0.7em;
-  height: 0.7em;
-  border-radius: 50%;
-  background: var(--dot, var(--live));
-  box-shadow: 0 0 0.9em var(--dot, var(--live));
-}
-
-.fc-day[data-g="0"] { --dot: #5fd0b8; }
-.fc-day[data-g="1"] { --dot: #fbbf24; }
-.fc-day[data-g="2"] { --dot: #fb923c; }
-.fc-day[data-g="3"],
-.fc-day[data-g="4"],
-.fc-day[data-g="5"] { --dot: #ff7a6b; }
-
 .fc-row {
   display: flex;
   justify-content: space-between;
@@ -296,29 +278,9 @@ body.mode-art #art {
 }
 
 .fc-row b { color: var(--paper); font-weight: 600; }
-
-/* Coronal mass ejections sit under the day cards. With two rows of cards the
-   type is a bit smaller so both fit. */
-.fc-cme { margin-top: clamp(14px, 2.6vh, 34px); }
-
-.fc-subhead {
-  margin: 0 0 clamp(8px, 1.4vh, 18px);
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: clamp(15px, min(2.2vw, 3.8vh), 36px);
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-
-.forecast-screen .fc-day { padding: clamp(12px, 2vh, 26px); }
-.forecast-screen .fc-date { font-size: clamp(12px, min(1.5vw, 2.5vh), 22px); }
-.forecast-screen .fc-cond { font-size: clamp(20px, min(3vw, 5vh), 50px); margin: 0.4em 0 0.5em; }
-.forecast-screen .fc-row { font-size: clamp(13px, min(1.45vw, 2.5vh), 24px); }
-.forecast-screen .fc-row.is-warn b { color: var(--amber); }
+.fc-row.is-warn b { color: var(--amber); }
 
 /* Cards come in one after another each time the screen appears. */
-body.mode-forecast .fc-day,
 body.mode-key .fc-day {
   animation: fc-in 0.8s ease backwards;
   animation-delay: calc(var(--i, 0) * 0.5s);
@@ -329,7 +291,6 @@ body.mode-key .fc-day {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.mode-forecast .fc-day,
   body.mode-key .fc-day { animation: none; }
 }
 
@@ -362,7 +323,7 @@ body.mode-art .grain {
 }
 
 /* ---- Artwork key ("Today's sky, translated") ----
-   Its own slide, shown just before the artwork. It reuses the forecast card
+   Its own slide, shown just before the artwork. It reuses the card
    styles (.fc-day, .fc-date, .fc-cond, .fc-row) with a small icon that
    matches the element in the art. */
 
@@ -407,7 +368,24 @@ body.mode-art .grain {
   box-shadow: 0 0 0 0.12em rgba(99, 179, 255, 0.3);
 }
 
-.fc-row.is-warn b { color: var(--amber); }
+/* An arc, like the expanding rings in the art. */
+.key-glyph.is-ring {
+  width: 0.8em;
+  height: 0.8em;
+  border-radius: 50%;
+  border: 0.11em solid transparent;
+  border-top-color: #c896ff;
+  border-right-color: #c896ff;
+  transform: rotate(-20deg);
+}
+
+/* A green glow fading downward, like the aurora hanging from the top of the art. */
+.key-glyph.is-aurora {
+  width: 1em;
+  height: 0.75em;
+  border-radius: 0.15em 0.15em 0.5em 0.5em;
+  background: linear-gradient(180deg, rgba(110, 235, 170, 0.95), rgba(110, 235, 170, 0));
+}
 
 /* ---- status dot ----
    A single small dot — never a panel or numeric readout. */
