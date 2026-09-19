@@ -64,4 +64,4 @@ No React, TypeScript, build tooling, or npm packages — plain HTML/CSS/JS, depl
 
 Set `NASA_API_KEY` in the Vercel project's environment variables (Project Settings → Environment Variables) to your own key from [api.nasa.gov](https://api.nasa.gov). It's read only inside the `api/` functions; nothing in the repo needs to contain it.
 
-For the written forecast, also set `OPENAI_API_KEY` (from platform.openai.com → API keys; the account needs billing credit). Optionally set `COSMIC_REPORT_MODEL` to use a model other than the default `gpt-4o`. Without the key everything still works — the weather screen just shows the one-line summary.
+For the written forecast, also set `OPENAI_API_KEY` (from platform.openai.com → API keys; the account needs billing credit). Optionally set `COSMIC_REPORT_MODEL` to use a model other than the default `gpt-5.6-luna` (it's called through OpenAI's Responses API). Without the key everything still works — the weather screen just shows the one-line summary.

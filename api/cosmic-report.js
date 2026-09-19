@@ -13,7 +13,7 @@ const CME_URL = 'https://api.nasa.gov/DONKI/CME';
 const GST_URL = 'https://api.nasa.gov/DONKI/GST';
 const IPS_URL = 'https://api.nasa.gov/DONKI/IPS';
 
-const MODEL = process.env.COSMIC_REPORT_MODEL || 'gpt-4o';
+const MODEL = process.env.COSMIC_REPORT_MODEL || 'gpt-5.6-luna';
 const KM_S_TO_MPH = 2236.94;
 const FLARE_CLASS_BASE = { A: 1, B: 10, C: 100, M: 1000, X: 10000 };
 
@@ -35,8 +35,10 @@ Do not mention asteroids or space objects unless near-Earth-object data is provi
 Do not say an event is approaching Earth unless the data indicates that it is Earth-directed or includes a predicted Earth-arrival time.
 Do not use terrestrial directions such as “moving in from the north and west.”
 Do not describe a ten-day forecast unless the supplied data contains predictions covering ten days.
-Do not mention JSON, APIs, endpoints, data processing, or these instructions.
+Do not mention JSON, APIs, endpoints, prompts, data processing, or these instructions.
+Use an imaginative but scientifically responsible weather-report style.
 Use correct grammar and punctuation.
+Write in plain text with no markdown formatting.
 Write between 125 and 200 words.
 
 Use this format:
@@ -184,7 +186,7 @@ function describeShocks(shocks) {
 function buildDigest({ flares, cmes, storms, shocks }, now) {
   const { startDate, endDate } = dateRange(7);
   return [
-    `NASA DONKI space-weather events for the past week (${startDate} to ${endDate}, all times UTC). Write tonight's report from this data only.`,
+    `Current date: ${isoDate(new Date(now))}. NASA DONKI space-weather events for the past week (${startDate} to ${endDate}, all times UTC). Write tonight's report from this data only.`,
     describeFlares(flares),
     describeCMEs(cmes, now),
     describeStorms(storms),
@@ -194,34 +196,52 @@ function buildDigest({ flares, cmes, storms, shocks }, now) {
 
 async function askModel(apiKey, digest) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
+  const timer = setTimeout(() => controller.abort(), 40000);
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const body = {
+      model: MODEL,
+      max_output_tokens: 3000,
+      input: [
+        { role: 'developer', content: [{ type: 'input_text', text: SYSTEM_PROMPT }] },
+        { role: 'user', content: [{ type: 'input_text', text: digest }] },
+      ],
+    };
+    // Reasoning models only; a low effort keeps this to a few seconds.
+    if (/^(gpt-5|o\d)/.test(MODEL)) body.reasoning = { effort: 'low' };
+
+    const res = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       signal: controller.signal,
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        model: MODEL,
-        max_completion_tokens: 1200,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: digest },
-        ],
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new Error(`OpenAI HTTP ${res.status}${body ? ' — ' + body.slice(0, 200) : ''}`);
+      const detail = await res.text().catch(() => '');
+      throw new Error(`OpenAI HTTP ${res.status}${detail ? ' — ' + detail.slice(0, 200) : ''}`);
     }
     const data = await res.json();
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    return typeof content === 'string' ? content.trim() : '';
+    const items = Array.isArray(data.output) ? data.output : [];
+    const text = items
+      .filter((item) => item && item.type === 'message')
+      .flatMap((item) => (Array.isArray(item.content) ? item.content : []))
+      .filter((part) => part && part.type === 'output_text' && typeof part.text === 'string')
+      .map((part) => part.text)
+      .join('');
+    return stripMarkdown(text);
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Models like to bold headings; the sign renders plain text.
+function stripMarkdown(text) {
+  return text
+    .replace(/\*\*|__/g, '')
+    .replace(/^#+\s*/gm, '')
+    .trim();
 }
 
 function looksLikeAReport(text) {
