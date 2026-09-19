@@ -16,7 +16,7 @@ Some sources don't need a key at all, so `app.js` fetches them directly: [NASA's
 
 ## The six screens
 
-Each slide holds for 10 seconds, then the sign moves on to the next — and a camera detecting a new visitor (movement after a few seconds of stillness) advances it immediately. The order: **APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth image → Artwork key → Algorithm Art → back to APOD.**
+Each slide holds for 15 seconds, then the sign moves on to the next — and a camera detecting a new visitor (movement after a few seconds of stillness) advances it immediately. The order: **APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth image → Artwork key → Algorithm Art → back to APOD.**
 
 - **APOD** — full-bleed image or video, whichever NASA published today.
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
@@ -40,7 +40,7 @@ Displayed values ease toward the latest fetched numbers rather than snapping, so
 
 ## Camera motion
 
-The sign asks for webcam access on load and uses simple frame differencing on a tiny (32×24) downscaled copy of the feed to detect movement. Frames are compared and discarded in the browser — nothing is recorded or sent anywhere. Movement after about three seconds of stillness counts as a new visitor and advances to the next screen right away (and restarts the 10-second hold); continuous movement doesn't skip screens. Sudden whole-frame brightness changes (lights, auto-exposure) are ignored. If there's no camera or permission is denied, mouse/touch/keyboard activity counts as movement instead, and the 10-second timer still runs. For a kiosk, allow camera access for the site once in the browser's site settings so it never prompts.
+The sign asks for webcam access on load and uses simple frame differencing on a tiny (32×24) downscaled copy of the feed to detect movement. Frames are compared and discarded in the browser — nothing is recorded or sent anywhere. Movement after about three seconds of stillness counts as a new visitor and advances to the next screen right away (and restarts the 15-second hold); continuous movement doesn't skip screens. Sudden whole-frame brightness changes (lights, auto-exposure) are ignored. If there's no camera or permission is denied, mouse/touch/keyboard activity counts as movement instead, and the 10-second timer still runs. For a kiosk, allow camera access for the site once in the browser's site settings so it never prompts.
 
 ## If NASA is unreachable
 

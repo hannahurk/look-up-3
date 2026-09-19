@@ -843,7 +843,7 @@
   // timer restarts. Continuous movement doesn't skip screens. Mouse/touch/
   // keyboard activity counts as movement too, for desks and testing.
 
-  const SLIDE_DWELL_MS = 10000; // every slide holds at least this long unless a visitor arrives
+  const SLIDE_DWELL_MS = 15000; // every slide holds at least this long unless a visitor arrives
   const MODE_ORDER = ['apod', 'wx', 'forecast', 'epic', 'key', 'art'];
   let dwellTimer;
   let mode = 'apod';
