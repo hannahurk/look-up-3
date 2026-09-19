@@ -205,8 +205,7 @@
   //
   // NOAA publishes an official 3-day forecast on its space weather scales
   // (G = geomagnetic storms, R = radio blackouts, S = radiation storms). The
-  // slide shows those as three day cards; forecastHeadline also feeds the
-  // artwork key slide.
+  // slide shows those as three day cards.
 
   const SCALES_URL = 'https://services.swpc.noaa.gov/products/noaa-scales.json';
   const FORECAST_REFRESH_MS = 30 * 60 * 1000;
@@ -251,17 +250,6 @@
       day: 'numeric',
       timeZone: 'UTC',
     });
-  }
-
-  function forecastHeadline(days) {
-    if (days.length === 0) return 'Forecast unavailable right now';
-    const maxG = Math.max(...days.map((d) => d.g));
-    const maxChance = Math.max(0, ...days.map((d) => Math.max(d.rMinor || 0, d.s || 0)));
-    if (maxG >= 3) return 'Storm watch: a strong geomagnetic storm is forecast';
-    if (maxG === 2) return 'A moderate geomagnetic storm is in the forecast';
-    if (maxG === 1) return 'Unsettled skies on the way';
-    if (maxChance >= 25) return 'Calm skies, with a chance of solar flare fallout';
-    return 'Calm skies ahead';
   }
 
   function strongestFlareClass(intensity) {
@@ -326,52 +314,97 @@
     paintArtKey();
   }
 
-  // The artwork key slide: says what each visual element is showing, using
-  // the same numbers that drive it. A line is skipped when its source isn't
-  // live, so the key never claims "quiet" for data it doesn't have.
+  // The artwork key slide: three cards, in the same style as the forecast
+  // cards, saying what each part of the artwork is showing right now. A card
+  // or row is skipped when its source isn't live, so the key never claims
+  // "quiet" for data it doesn't have.
   function paintArtKey() {
-    const list = document.getElementById('key-list');
-    if (!list) return;
+    const box = document.getElementById('key-cards');
+    if (!box) return;
 
     const sw = latestData && latestData.spaceWeather;
     const status = (latestData && latestData.sourceStatus) || {};
-    const rows = [];
+    const eventsLive = status.flares === 'live' && status.cmes === 'live';
+    const cards = [];
 
-    if (sw && status.storms === 'live') {
-      const intensity = sw.geomagneticIntensity || 0;
-      const feel = intensity < 0.15 ? 'small and slow' : intensity < 0.6 ? 'medium-sized and moderately quick' : 'long, fast and thick';
-      const storm = sw.kpIndex > 0 ? `this week’s storm peaked at Kp ${sw.kpIndex}` : 'no geomagnetic storm was logged this week';
-      rows.push(['streak', `Shooting stars are ${feel}. Their size and speed follow geomagnetic activity, and ${storm}.`]);
-    }
-    if (sw && status.flares === 'live' && status.cmes === 'live') {
-      rows.push(['streak', `More space-weather events mean more shooting stars: ${plural(sw.flareCount, 'solar flare', 'solar flares')} and ${plural(sw.cmeCount, 'coronal mass ejection', 'coronal mass ejections')} this week.`]);
+    if (sw && (status.storms === 'live' || eventsLive)) {
+      const rows = [];
+      let value = null;
+      if (status.storms === 'live') {
+        const intensity = sw.geomagneticIntensity || 0;
+        value = intensity < 0.15 ? 'Small & slow' : intensity < 0.6 ? 'Medium' : 'Long & fast';
+        rows.push(['Storm peak', sw.kpIndex > 0 ? `Kp ${sw.kpIndex}` : 'None']);
+      }
+      if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
+      cards.push({
+        label: 'Shooting stars', glyph: 'streak', value, rows,
+        note: 'Storm level sets size and speed. Solar events set how many.',
+      });
     }
     if (sw && status.flares === 'live') {
       const strongest = strongestFlareClass(sw.flareIntensity);
-      rows.push(['core', strongest
-        ? `The glowing core is the Sun, brighter with flare strength. This week’s strongest flare was ${/^[AMX]/.test(strongest) ? 'an' : 'a'} ${strongest}.`
-        : 'The glowing core is the Sun. No flares this week, so it glows at its calmest.']);
+      cards.push({
+        label: 'Glowing core', glyph: 'core',
+        value: strongest ? `${strongest} flare` : 'No flares',
+        rows: [['Flares this week', String(sw.flareCount)]],
+        note: 'The Sun. Brighter when flares are stronger.',
+      });
     }
     if (status.neo === 'live' && latestData.asteroids) {
       const count = latestData.asteroids.length;
       const hazardous = latestData.asteroids.filter((a) => a.hazardous).length;
-      rows.push(['orbit', count === 0
-        ? 'No asteroids are on today’s close-approach list.'
-        : `Each orbiting dot is an asteroid passing Earth today: bigger dot, bigger rock; faster orbit, faster flyby; wider orbit, farther miss.${hazardous ? ` ${hazardous === 1 ? 'One is' : hazardous + ' are'} tinted amber as potentially hazardous.` : ''}`]);
-    }
-    const days = forecastDays();
-    if (days.length) {
-      const headline = forecastHeadline(days);
-      rows.push(['forecast', `The three-day forecast: ${headline.charAt(0).toLowerCase()}${headline.slice(1)}.`]);
+      cards.push({
+        label: 'Orbiting dots', glyph: 'orbit',
+        value: count === 0 ? 'None today' : plural(count, 'asteroid', 'asteroids'),
+        rows: hazardous ? [['Potentially hazardous', String(hazardous), true]] : [],
+        note: 'Bigger dot, bigger rock. Faster orbit, faster flyby. Wider orbit, farther miss.',
+      });
     }
 
-    list.textContent = '';
-    rows.forEach(([kind, text], i) => {
-      const li = document.createElement('li');
-      li.className = 'key-item is-' + kind;
-      li.style.setProperty('--i', i);
-      li.textContent = text;
-      list.appendChild(li);
+    box.textContent = '';
+    if (cards.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'fc-empty';
+      empty.textContent = 'Waiting for live data';
+      box.appendChild(empty);
+      return;
+    }
+    cards.forEach((c, i) => {
+      const card = document.createElement('div');
+      card.className = 'fc-day';
+      card.style.setProperty('--i', i);
+
+      const label = document.createElement('div');
+      label.className = 'fc-date';
+      label.textContent = c.label;
+      card.appendChild(label);
+
+      if (c.value) {
+        const cond = document.createElement('div');
+        cond.className = 'fc-cond';
+        const glyph = document.createElement('span');
+        glyph.className = 'key-glyph is-' + c.glyph;
+        glyph.setAttribute('aria-hidden', 'true');
+        cond.append(glyph, c.value);
+        card.appendChild(cond);
+      }
+
+      c.rows.forEach(([name, value, warn]) => {
+        const row = document.createElement('div');
+        row.className = 'fc-row' + (warn ? ' is-warn' : '');
+        const n = document.createElement('span');
+        n.textContent = name;
+        const v = document.createElement('b');
+        v.textContent = value;
+        row.append(n, v);
+        card.appendChild(row);
+      });
+
+      const note = document.createElement('p');
+      note.className = 'fc-note';
+      note.textContent = c.note;
+      card.appendChild(note);
+      box.appendChild(card);
     });
   }
 

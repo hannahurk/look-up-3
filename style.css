@@ -232,14 +232,6 @@ body.mode-art #art {
   color: var(--paper);
 }
 
-/* Sub-headline on the artwork key slide. */
-.fc-headline {
-  margin: 0 0 clamp(14px, 2.4vh, 28px);
-  font-size: clamp(28px, min(5vw, 8vh), 72px);
-  font-weight: 700;
-  line-height: 1.1;
-}
-
 .fc-days {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -306,7 +298,8 @@ body.mode-art #art {
 .fc-row b { color: var(--paper); font-weight: 600; }
 
 /* Cards come in one after another each time the screen appears. */
-body.mode-forecast .fc-day {
+body.mode-forecast .fc-day,
+body.mode-key .fc-day {
   animation: fc-in 0.8s ease backwards;
   animation-delay: calc(var(--i, 0) * 0.5s);
 }
@@ -316,7 +309,8 @@ body.mode-forecast .fc-day {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.mode-forecast .fc-day { animation: none; }
+  body.mode-forecast .fc-day,
+  body.mode-key .fc-day { animation: none; }
 }
 
 @media (max-width: 560px) {
@@ -348,75 +342,47 @@ body.mode-art .grain {
 }
 
 /* ---- Artwork key ("Today's sky, translated") ----
-   Its own slide, shown just before the artwork: the same plain weather-report
-   voice as the forecast, saying what each part of the art means right now. */
+   Its own slide, shown just before the artwork. It reuses the forecast card
+   styles (.fc-day, .fc-date, .fc-cond, .fc-row) with a small icon that
+   matches the element in the art, plus a muted one-line note. */
 
 .key-screen { padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 48px); }
 
-.key-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: clamp(16px, min(2vw, 3.1vh), 30px);
-  line-height: 1.45;
-}
-
-.key-item {
-  display: grid;
-  grid-template-columns: 2.6em 1fr;
-  gap: 0.6em;
-  align-items: start;
-  margin-bottom: clamp(10px, 1.8vh, 22px);
-  color: #e3e6ee;
-}
-
-.key-item::before {
-  content: '';
+.key-glyph {
+  flex: none;
   display: block;
-  justify-self: center;
-  margin-top: 0.5em;
 }
 
-.key-item.is-streak::before {
-  width: 2.2em;
-  height: 0.2em;
-  border-radius: 0.1em;
+.key-glyph.is-streak {
+  width: 1.1em;
+  height: 0.09em;
+  border-radius: 0.05em;
   background: linear-gradient(90deg, rgba(250, 250, 255, 0), #fafaff);
   transform: rotate(-20deg);
 }
 
-.key-item.is-core::before {
-  width: 1.4em;
-  height: 1.4em;
-  margin-top: 0.1em;
+.key-glyph.is-core {
+  width: 0.85em;
+  height: 0.85em;
   border-radius: 50%;
-  background: radial-gradient(circle, #63b3ff 0%, rgba(99, 179, 255, 0.35) 55%, rgba(99, 179, 255, 0) 72%);
+  background: radial-gradient(circle, #63b3ff 0%, rgba(99, 179, 255, 0.4) 55%, rgba(99, 179, 255, 0) 72%);
 }
 
-.key-item.is-orbit::before {
-  width: 0.9em;
-  height: 0.9em;
-  margin-top: 0.3em;
+.key-glyph.is-orbit {
+  width: 0.5em;
+  height: 0.5em;
   border-radius: 50%;
   background: #63b3ff;
-  box-shadow: 0 0 0 0.22em rgba(99, 179, 255, 0.3);
+  box-shadow: 0 0 0 0.12em rgba(99, 179, 255, 0.3);
 }
 
-.key-item.is-forecast::before {
-  width: 0.7em;
-  height: 0.7em;
-  margin-top: 0.4em;
-  background: var(--amber);
-  transform: rotate(45deg);
-}
+.fc-row.is-warn b { color: var(--amber); }
 
-body.mode-key .key-item {
-  animation: fc-in 0.8s ease backwards;
-  animation-delay: calc(var(--i, 0) * 0.5s + 0.3s);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  body.mode-key .key-item { animation: none; }
+.fc-note {
+  margin: 0.9em 0 0;
+  font-size: clamp(12px, min(1.4vw, 2.6vh), 22px);
+  line-height: 1.4;
+  color: var(--slate);
 }
 
 /* ---- status dot ----
