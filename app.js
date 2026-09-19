@@ -23,6 +23,7 @@
   let width = 0;
   let height = 0;
   let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let ui = 1; // size scale so the art stays readable from across a room on big screens
 
   // ---------- small math helpers ----------
 
@@ -290,8 +291,8 @@
       stars.push({
         x: rand() * width,
         y: rand() * height,
-        r: 0.4 + rand() * 1.3,
-        base: 0.25 + rand() * 0.55,
+        r: (0.9 + rand() * 1.6) * ui,
+        base: 0.5 + rand() * 0.5,
         phase: rand() * Math.PI * 2,
         speed: 0.15 + rand() * 0.25,
       });
@@ -315,7 +316,7 @@
       const radius = a.missDistance > 0
         ? logMapRange(a.missDistance, Math.max(minMiss, 1), Math.max(maxMiss, minMiss + 1), minRadius, maxRadius)
         : lerp(minRadius, maxRadius, rand());
-      const bodyRadius = a.diameter > 0 ? logMapRange(a.diameter, 5, 2000, 1.2, 3.6) : 1.8;
+      const bodyRadius = a.diameter > 0 ? logMapRange(a.diameter, 5, 2000, 4, 11) * ui : 6 * ui;
       const angularSpeed = a.velocity > 0 ? mapRange(a.velocity, 3000, 120000, 0.05, 0.32) : 0.1;
 
       return {
@@ -355,6 +356,7 @@
     width = window.innerWidth;
     height = window.innerHeight;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
+    ui = clamp(Math.min(width, height) / 500, 1.4, 3);
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     canvas.style.width = width + 'px';
@@ -385,8 +387,8 @@
   function drawCore(t, center, elevated) {
     const intensity = shown.flareIntensity;
     const normalized = clamp(logMapRange(intensity, 1, 10000, 0, 1), 0, 1);
-    const radius = mapRange(normalized, 0, 1, Math.min(width, height) * 0.045, Math.min(width, height) * 0.085);
-    const brightness = mapRange(normalized, 0, 1, 0.12, 0.26);
+    const radius = mapRange(normalized, 0, 1, Math.min(width, height) * 0.06, Math.min(width, height) * 0.11);
+    const brightness = mapRange(normalized, 0, 1, 0.4, 0.7);
     const breathe = 1 + Math.sin(t * 0.12) * 0.04;
 
     const color = elevated ? mix(palette.core, palette.amber, 0.22) : palette.core;
@@ -426,9 +428,9 @@
       ctx.beginPath();
       ctx.arc(0, 0, orbit.radius, 0, Math.PI * 2);
       ctx.strokeStyle = orbit.hazardous && elevated
-        ? rgba(palette.amber, 0.16)
-        : rgba(palette.star, 0.09);
-      ctx.lineWidth = 1.8;
+        ? rgba(palette.amber, 0.5)
+        : rgba(palette.star, 0.32);
+      ctx.lineWidth = 3 * ui;
       ctx.stroke();
       ctx.restore();
     }
@@ -439,14 +441,14 @@
       orbit.angle += orbit.angularSpeed * dt * (reduceMotion ? 0.15 : 1);
       const pos = orbitPosition(orbit, center);
       const color = orbit.hazardous ? mix(palette.amber, palette.core, elevated ? 0.25 : 0.5) : palette.core;
-      const alpha = orbit.hazardous ? 0.55 : 0.42;
+      const alpha = orbit.hazardous ? 0.85 : 0.75;
 
-      const glow = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, orbit.bodyRadius * 2.2);
+      const glow = ctx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, orbit.bodyRadius * 2.6);
       glow.addColorStop(0, rgba(color, alpha));
       glow.addColorStop(1, rgba(color, 0));
       ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, orbit.bodyRadius * 2.2, 0, Math.PI * 2);
+      ctx.arc(pos.x, pos.y, orbit.bodyRadius * 2.6, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.beginPath();
@@ -477,7 +479,7 @@
     const alpha = Math.min(fadeIn, fadeOut);
     if (alpha <= 0) return;
 
-    const length = mapRange(geo, 0, 1, 14, 46) * p.sizeFactor;
+    const length = mapRange(geo, 0, 1, 60, 200) * p.sizeFactor * ui;
     const dx = Math.cos(p.angle);
     const dy = Math.sin(p.angle);
     const tailX = p.x - dx * length;
@@ -486,9 +488,9 @@
 
     const gradient = ctx.createLinearGradient(tailX, tailY, p.x, p.y);
     gradient.addColorStop(0, rgba(color, 0));
-    gradient.addColorStop(1, rgba(color, alpha * 0.75));
+    gradient.addColorStop(1, rgba(color, alpha));
     ctx.strokeStyle = gradient;
-    ctx.lineWidth = mapRange(geo, 0, 1, 1.1, 2.8);
+    ctx.lineWidth = mapRange(geo, 0, 1, 2.5, 6) * ui;
     ctx.beginPath();
     ctx.moveTo(tailX, tailY);
     ctx.lineTo(p.x, p.y);
@@ -496,15 +498,15 @@
 
     ctx.beginPath();
     ctx.fillStyle = rgba(color, alpha);
-    ctx.arc(p.x, p.y, mapRange(geo, 0, 1, 1.0, 2.3), 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, mapRange(geo, 0, 1, 3, 6.5) * ui, 0, Math.PI * 2);
     ctx.fill();
   }
 
   function drawParticles(elevated) {
     const geo = shown.geomagneticIntensity;
-    const speed = mapRange(geo, 0, 1, 0.6, 2.8);
+    const speed = mapRange(geo, 0, 1, 1.4, 5.5) * ui;
 
-    const targetFine = Math.round(clamp(shown.eventDensity || 0, 0, 16));
+    const targetFine = Math.round(clamp(shown.eventDensity || 0, 4, 16));
     while (fineParticles.length < targetFine) fineParticles.push(makeFineParticle());
     while (fineParticles.length > targetFine) fineParticles.pop();
 
@@ -550,23 +552,25 @@
 
   // ---------- idle / wake cycle ----------
   //
-  // Simulates the shelter's motion sensor with mouse/touch/keyboard activity —
-  // swap the listeners below for a real PIR/ultrasonic sensor signal on a
-  // physical install. Each time the sign wakes up from idle (not on every
-  // twitch while already awake), it cycles to the next screen: APOD photo →
-  // Cosmic Meteorology → EPIC Earth image → Algorithm Art → back to APOD.
+  // The sign wakes on motion. A webcam (see startCameraMotion) is the real
+  // trigger for the install; mouse/touch/keyboard activity stays as a
+  // fallback for desks and testing. Each time the sign wakes from idle it
+  // cycles to the next screen: APOD photo → Cosmic Meteorology → EPIC Earth
+  // image → Algorithm Art → back to APOD. Camera motion after a quiet gap
+  // counts as a new visitor and advances the screen even if the sign hasn't
+  // gone idle yet.
 
   const IDLE_TIMEOUT_MS = 8000;
   const MODE_ORDER = ['apod', 'wx', 'epic', 'art'];
   let idleTimer;
   let mode = 'apod';
 
-  function wake() {
+  function wake(forceAdvance) {
     const wasIdle = document.body.classList.contains('is-idle');
     document.body.classList.remove('is-idle');
     clearTimeout(idleTimer);
     idleTimer = setTimeout(goIdle, IDLE_TIMEOUT_MS);
-    if (wasIdle) toggleMode();
+    if (wasIdle || forceAdvance === true) toggleMode();
   }
 
   function goIdle() {
@@ -581,9 +585,80 @@
 
   function startIdleCycle() {
     ['mousemove', 'touchstart', 'touchmove', 'keydown', 'click', 'scroll'].forEach((evt) => {
-      window.addEventListener(evt, wake, { passive: true });
+      window.addEventListener(evt, () => wake(), { passive: true });
     });
     idleTimer = setTimeout(goIdle, IDLE_TIMEOUT_MS);
+  }
+
+  // ---------- camera motion ----------
+  //
+  // Frame differencing on a tiny downscaled copy of the webcam feed. Frames
+  // are compared and thrown away in the browser — nothing is recorded or sent
+  // anywhere. If the camera is missing or permission is denied, the sign just
+  // keeps using the mouse/touch fallback above.
+
+  const MOTION_SAMPLE_MS = 120;
+  const MOTION_QUIET_MS = 3000; // stillness needed before movement counts as a new visitor
+  const PIXEL_DELTA = 28; // per-pixel brightness change (0-255) that counts as "changed"
+  const MOTION_MIN_FRACTION = 0.015; // share of pixels changed to count as movement
+  const MOTION_MAX_FRACTION = 0.6; // above this it's a lighting/exposure shift, not a person
+  const SAMPLE_W = 32;
+  const SAMPLE_H = 24;
+
+  let lastMotionAt = 0;
+
+  function onMotion() {
+    const now = performance.now();
+    const isNewEvent = now - lastMotionAt > MOTION_QUIET_MS;
+    lastMotionAt = now;
+    wake(isNewEvent);
+  }
+
+  async function startCameraMotion() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 }, audio: false });
+    } catch (err) {
+      console.info('camera motion unavailable — using mouse/touch instead:', err && err.name);
+      return;
+    }
+
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = stream;
+    try {
+      await video.play();
+    } catch (err) {
+      return;
+    }
+
+    const sample = document.createElement('canvas');
+    sample.width = SAMPLE_W;
+    sample.height = SAMPLE_H;
+    const sctx = sample.getContext('2d', { willReadFrequently: true });
+    let previous = null;
+
+    setInterval(() => {
+      if (video.readyState < 2) return;
+      sctx.drawImage(video, 0, 0, SAMPLE_W, SAMPLE_H);
+      const { data } = sctx.getImageData(0, 0, SAMPLE_W, SAMPLE_H);
+      const current = new Uint8Array(SAMPLE_W * SAMPLE_H);
+      for (let i = 0; i < current.length; i++) {
+        current[i] = data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114;
+      }
+      if (previous) {
+        let changed = 0;
+        for (let i = 0; i < current.length; i++) {
+          if (Math.abs(current[i] - previous[i]) > PIXEL_DELTA) changed++;
+        }
+        const fraction = changed / current.length;
+        if (fraction >= MOTION_MIN_FRACTION && fraction <= MOTION_MAX_FRACTION) onMotion();
+      }
+      previous = current;
+    }, MOTION_SAMPLE_MS);
   }
 
   // ---------- boot ----------
@@ -600,6 +675,7 @@
   setInterval(loadSolarWind, WIND_REFRESH_MS);
   setInterval(fetchData, REFRESH_MS);
   startIdleCycle();
+  startCameraMotion();
 
   requestAnimationFrame(frame);
 })();

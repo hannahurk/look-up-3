@@ -60,8 +60,7 @@ body.mode-art #art {
 
 body.is-idle:not(.mode-wx):not(.mode-epic):not(.mode-art) .oculus,
 body.is-idle.mode-epic .epic-screen,
-body.is-idle.mode-wx .stat-screen#wx-screen,
-body.is-idle.mode-art #art {
+body.is-idle.mode-wx .stat-screen#wx-screen {
   opacity: 0.32;
   filter: saturate(0.55);
   animation: breathe 5s ease-in-out infinite;
@@ -70,6 +69,18 @@ body.is-idle.mode-art #art {
 @keyframes breathe {
   0%, 100% { opacity: 0.28; }
   50% { opacity: 0.4; }
+}
+
+/* The art is meant to be read from below at ceiling height, so it only
+   dims slightly when idle instead of fading to a faint glow. */
+body.is-idle.mode-art #art {
+  opacity: 0.8;
+  animation: breathe-art 5s ease-in-out infinite;
+}
+
+@keyframes breathe-art {
+  0%, 100% { opacity: 0.74; }
+  50% { opacity: 0.86; }
 }
 
 @media (prefers-reduced-motion: reduce) {

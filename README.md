@@ -16,7 +16,7 @@ Two more sources don't need a key at all, so `app.js` fetches them directly: [NA
 
 ## The four screens
 
-Each time the sign wakes from idle (not on every twitch while already awake), it advances: **APOD photo → Cosmic Meteorology → EPIC Earth image → Algorithm Art → back to APOD.**
+Each time the sign wakes from idle (not on every twitch while already awake), or a camera detects a new visitor after a few seconds of stillness, it advances: **APOD photo → Cosmic Meteorology → EPIC Earth image → Algorithm Art → back to APOD.**
 
 - **APOD** — full-bleed image or video, whichever NASA published today.
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
@@ -35,6 +35,10 @@ Each time the sign wakes from idle (not on every twitch while already awake), it
 - **Potentially hazardous asteroids**, and generally elevated conditions (an X-class flare or Kp ≥ 5), bring in a restrained amber tint — never a saturated warning color.
 
 Displayed values ease toward the latest fetched numbers rather than snapping, so a data refresh never looks abrupt. The canvas keeps running continuously in the background even while a different screen is showing, so Algorithm Art is always mid-motion when the cycle reaches it.
+
+## Camera motion
+
+The sign asks for webcam access on load and uses simple frame differencing on a tiny (32×24) downscaled copy of the feed to detect movement. Frames are compared and discarded in the browser — nothing is recorded or sent anywhere. Movement wakes the sign; movement after about three seconds of stillness counts as a new visitor and advances to the next screen. Sudden whole-frame brightness changes (lights, auto-exposure) are ignored. If there's no camera or permission is denied, mouse/touch/keyboard activity is the fallback. For a kiosk, allow camera access for the site once in the browser's site settings so it never prompts.
 
 ## If NASA is unreachable
 
