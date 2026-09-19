@@ -1,5 +1,5 @@
 // Space, Translated — a ceiling sign cycling through NASA's Astronomy
-// Picture of the Day, space weather, a live Earth image, a key to the
+// Picture of the Day, a live Earth image, a Cosmic Meteorology key to the
 // artwork, and a generative canvas reading of the same live data ("Algorithm Art").
 //
 // /api/nasa-data (a serverless proxy holding the real NASA key) supplies
@@ -149,8 +149,17 @@
   }
 
   // ---------- Solar wind (NOAA SWPC — near-real-time, no key required) ----------
+  //
+  // Speed and field tilt (Bz) drive the wind streaks and the aurora in the
+  // art, and are reported on the Cosmic Meteorology slide. A reading older
+  // than WIND_MAX_AGE_MS is ignored rather than shown as if it were current.
 
-  let latestWind = null; // { kms, mph, bz } — latest solar wind speed and field tilt; drives the art and the key slide
+  const WIND_MAX_AGE_MS = 30 * 60 * 1000;
+  let latestWind = null; // { kms, mph, bz, at }
+
+  function currentWind() {
+    return latestWind && Date.now() - latestWind.at < WIND_MAX_AGE_MS ? latestWind : null;
+  }
 
   async function loadSolarWind() {
     try {
@@ -161,48 +170,14 @@
       if (!magRes.ok || !speedRes.ok) throw new Error('HTTP ' + magRes.status + '/' + speedRes.status);
       const [mag] = await magRes.json();
       const [speed] = await speedRes.json();
-      renderSolarWind(mag, speed);
+      const kms = Number(speed.proton_speed);
+      const bz = Number(mag.bz_gsm);
+      if (!Number.isFinite(kms) || !Number.isFinite(bz)) throw new Error('Unexpected solar wind data');
+      latestWind = { kms, mph: Math.round(kms * KM_S_TO_MPH), bz, at: Date.now() };
+      paintArtKey();
     } catch (err) {
-      document.getElementById('wx-card').classList.add('has-error');
-      document.getElementById('wind-speed').textContent = '—';
-      document.getElementById('wind-bz').textContent = '—';
       console.error('Solar wind fetch failed:', err);
     }
-  }
-
-  function renderSolarWind(mag, speed) {
-    const card = document.getElementById('wx-card');
-    card.classList.remove('has-error');
-
-    const mph = Math.round(speed.proton_speed * KM_S_TO_MPH);
-    document.getElementById('wind-speed').textContent = mph.toLocaleString('en-US');
-    const bz = mag.bz_gsm;
-    latestWind = { kms: Number(speed.proton_speed), mph, bz: Number(bz) };
-    paintArtKey();
-
-    document.getElementById('wind-bz').textContent = (bz > 0 ? '+' : '') + bz;
-    const isSouth = bz < -2; // southward field: more likely to spark aurora
-    card.classList.toggle('is-south', isSouth);
-    document.getElementById('aurora-badge').hidden = !isSouth;
-  }
-
-  // ---------- Cosmic Meteorology summary (from /api/nasa-data) ----------
-
-  function renderSpaceWeatherSummary(spaceWeather) {
-    const card = document.getElementById('wx-card');
-    card.classList.remove('has-error');
-
-    let text;
-    if (spaceWeather.kpIndex >= 5) {
-      text = `Geomagnetic storm conditions — Kp ${spaceWeather.kpIndex}`;
-    } else if (spaceWeather.flareCount > 0) {
-      text = `${spaceWeather.flareCount} solar flare${spaceWeather.flareCount === 1 ? '' : 's'} this week`;
-    } else if (spaceWeather.cmeCount > 0) {
-      text = `${spaceWeather.cmeCount} coronal mass ejection${spaceWeather.cmeCount === 1 ? '' : 's'} this week`;
-    } else {
-      text = 'All quiet — no notable activity this week.';
-    }
-    document.getElementById('wx-alert').textContent = text;
   }
 
   // ---------- small formatting helpers ----------
@@ -243,11 +218,12 @@
       if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
       cards.push({ label: 'Shooting stars', glyph: 'streak', value, rows });
     }
-    if (latestWind && Number.isFinite(latestWind.kms)) {
-      const pace = latestWind.kms < 350 ? 'Gentle' : latestWind.kms < 500 ? 'Steady' : latestWind.kms < 700 ? 'Brisk' : 'Fast';
+    const wind = currentWind();
+    if (wind) {
+      const pace = wind.kms < 350 ? 'Gentle' : wind.kms < 500 ? 'Steady' : wind.kms < 700 ? 'Brisk' : 'Fast';
       cards.push({
         label: 'Solar wind', glyph: 'wind',
-        value: `${latestWind.mph.toLocaleString('en-US')} mph`,
+        value: `${wind.mph.toLocaleString('en-US')} mph`,
         rows: [['Streaming pace', pace]],
       });
     }
@@ -262,11 +238,11 @@
         ],
       });
     }
-    if (latestWind && Number.isFinite(latestWind.bz)) {
+    if (wind) {
       cards.push({
         label: 'Aurora glow', glyph: 'aurora',
-        value: latestWind.bz < -2 ? 'Aurora watch' : 'Quiet',
-        rows: [['Magnetic field tilt (Bz)', `${latestWind.bz > 0 ? '+' : ''}${latestWind.bz} nT`]],
+        value: wind.bz < -2 ? 'Aurora watch' : 'Quiet',
+        rows: [['Magnetic field tilt (Bz)', `${wind.bz > 0 ? '+' : ''}${wind.bz} nT`]],
       });
     }
     if (sw && status.flares === 'live') {
@@ -376,7 +352,6 @@
       rebuildOrbits(data.asteroids || []);
       rebuildCMERings(data.cmes);
       renderAPOD(data.apod);
-      renderSpaceWeatherSummary(data.spaceWeather);
       paintArtKey();
     } catch (err) {
       // Keep whatever we last had (or the fallback) and just reflect the
@@ -740,25 +715,24 @@
   function drawAurora(t) {
     const a = shown.aurora;
     if (a < 0.02) return;
-    const maxH = height * (0.16 + 0.16 * a);
-    const step = Math.max(8, Math.round(width / 120));
+    const maxH = height * (0.14 + 0.14 * a);
+    const step = Math.max(6, Math.round(width / 160));
+    const topAlpha = mapRange(a, 0.35, 1, 0.55, 0.85);
 
-    const topAlpha = mapRange(a, 0.35, 1, 0.55, 0.9);
+    // Thin vertical curtains, each fading to nothing at its own sway-driven
+    // height, so the lower edge is soft rather than a hard outline.
     for (let layer = 0; layer < 2; layer++) {
       const color = layer === 0 ? palette.aurora : mix(palette.aurora, palette.core, 0.55);
-      const gradient = ctx.createLinearGradient(0, 0, 0, maxH);
-      gradient.addColorStop(0, rgba(color, topAlpha));
-      gradient.addColorStop(1, rgba(color, 0));
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      for (let x = 0; x <= width + step; x += step) {
+      for (let x = 0; x < width; x += step) {
         const sway = 0.55 + 0.3 * Math.sin(x * 0.011 + t * 1.4 + layer * 2) + 0.15 * Math.sin(x * 0.027 - t * 0.9);
-        ctx.lineTo(x, maxH * (layer ? 0.7 : 1) * sway);
+        const h = maxH * (layer ? 0.7 : 1) * sway;
+        const gradient = ctx.createLinearGradient(0, 0, 0, h);
+        gradient.addColorStop(0, rgba(color, topAlpha));
+        gradient.addColorStop(0.45, rgba(color, topAlpha * 0.4));
+        gradient.addColorStop(1, rgba(color, 0));
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x, 0, step + 1, h);
       }
-      ctx.lineTo(width + step, 0);
-      ctx.closePath();
-      ctx.fill();
     }
   }
 
@@ -791,8 +765,9 @@
 
     shown.flareIntensity = lerp(shown.flareIntensity, latestData.spaceWeather.flareIntensity, 0.01);
     shown.geomagneticIntensity = lerp(shown.geomagneticIntensity, latestData.spaceWeather.geomagneticIntensity, 0.01);
-    if (latestWind) shown.windKms = lerp(shown.windKms, latestWind.kms, 0.01);
-    const auroraTarget = latestWind && latestWind.bz < -2 ? mapRange(-latestWind.bz, 2, 12, 0.35, 1) : 0;
+    const wind = currentWind();
+    if (wind) shown.windKms = lerp(shown.windKms, wind.kms, 0.01);
+    const auroraTarget = wind && wind.bz < -2 ? mapRange(-wind.bz, 2, 12, 0.35, 1) : 0;
     shown.aurora = lerp(shown.aurora, auroraTarget, 0.02);
     const eventDensityTarget =
       latestData.spaceWeather.flareCount + latestData.spaceWeather.cmeCount + (latestData.spaceWeather.kpIndex > 0 ? 6 : 0);
@@ -819,7 +794,7 @@
   // ---------- slide cycle ----------
   //
   // Each slide holds for SLIDE_DWELL_MS, then the sign moves to the next one:
-  // APOD photo → Cosmic Meteorology → EPIC Earth image → Artwork key →
+  // APOD photo → EPIC Earth image → Cosmic Meteorology (the key to the art) →
   // Algorithm Art → back to APOD. Movement cuts in
   // early: when the camera (see startCameraMotion) sees a new visitor — motion
   // after a few seconds of stillness — the sign advances right away and the
@@ -827,13 +802,13 @@
   // keyboard activity counts as movement too, for desks and testing.
 
   const SLIDE_DWELL_MS = 15000; // every slide holds at least this long unless a visitor arrives
-  const MODE_ORDER = ['apod', 'wx', 'epic', 'key', 'art'];
+  const MODE_ORDER = ['apod', 'epic', 'key', 'art'];
   let dwellTimer;
   let mode = 'apod';
 
   function advance() {
     mode = MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length];
-    document.body.classList.remove('mode-wx', 'mode-key', 'mode-epic', 'mode-art');
+    document.body.classList.remove('mode-key', 'mode-epic', 'mode-art');
     if (mode !== 'apod') document.body.classList.add('mode-' + mode);
     clearTimeout(dwellTimer);
     dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);

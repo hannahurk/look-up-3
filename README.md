@@ -1,6 +1,6 @@
 # Space, Translated
 
-A ceiling sign that cycles through six full-screen views of live NASA and NOAA data: today's Astronomy Picture of the Day, a space-weather readout, a three-day space weather forecast, a live Earth image, a card-style key to the artwork, and "Algorithm Art" — a generative canvas piece that translates the same live space-weather and near-Earth-object data into slow, ambient motion (not a dashboard, not a literal solar-system diagram).
+A ceiling sign that cycles through four full-screen views of live space data: today's Astronomy Picture of the Day, a live Earth image, a card-style "Cosmic Meteorology" key that explains the artwork, and "Algorithm Art" — a generative canvas piece that translates live space-weather and near-Earth-object data into slow, ambient motion (not a dashboard, not a literal solar-system diagram).
 
 ## What's driving it
 
@@ -9,33 +9,35 @@ A Vercel serverless function (`api/nasa-data.js`) is the only thing that holds t
 - [`planetary/apod`](https://api.nasa.gov) — today's Astronomy Picture of the Day
 - [`neo/rest/v1/feed`](https://api.nasa.gov) — today's near-Earth objects
 - [`DONKI/FLR`](https://api.nasa.gov) — solar flares, trailing ~7 days
-- [`DONKI/CME`](https://api.nasa.gov) — coronal mass ejections, trailing ~7 days (also passed through as the three most recent eruptions for the forecast slide)
+- [`DONKI/CME`](https://api.nasa.gov) — coronal mass ejections, trailing ~7 days (also passed through as the three most relevant recent eruptions, which the art draws as expanding arcs)
 - [`DONKI/GST`](https://api.nasa.gov) — geomagnetic storms, trailing ~7 days
 
-Some sources don't need a key at all, so `app.js` fetches them directly: [NASA's EPIC API](https://epic.gsfc.nasa.gov/) (Earth imagery) and [NOAA SWPC](https://www.swpc.noaa.gov/) (real-time solar wind, the Kp index, and NOAA's three-day space weather scales forecast). The browser never talks to `api.nasa.gov` itself — only `/api/nasa-data`, EPIC, and NOAA.
+Some sources don't need a key at all, so `app.js` fetches them directly: [NASA's EPIC API](https://epic.gsfc.nasa.gov/) (Earth imagery) and [NOAA SWPC](https://www.swpc.noaa.gov/) (real-time solar wind speed and magnetic-field tilt). The browser never talks to `api.nasa.gov` itself — only `/api/nasa-data`, EPIC, and NOAA.
 
-## The six screens
+## The four screens
 
-Each slide holds for 15 seconds, then the sign moves on to the next — and a camera detecting a new visitor (movement after a few seconds of stillness) advances it immediately. The order: **APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth image → Artwork key → Algorithm Art → back to APOD.**
+Each slide holds for 15 seconds, then the sign moves on to the next — and a camera detecting a new visitor (movement after a few seconds of stillness) advances it immediately. The order: **APOD photo → EPIC Earth image → Cosmic Meteorology → Algorithm Art → back to APOD.**
 
-- **APOD** — full-bleed image or video, whichever NASA published today.
-- **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
-- **Space Weather Forecast** — an orange all-caps heading over three day cards built from NOAA's official three-day forecast: a color-coded level from Calm to Extreme storm, plus the chance of a radio blackout and of a radiation storm. Below them, a row of cards for the most recent coronal mass ejections (from the live DONKI feed): when each erupted, its speed, and whether an Earth impact is predicted, with the estimated arrival time when there is one.
+- **APOD** — full-bleed image or video, whichever picture NASA published today.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
-- **Artwork key ("Today's sky, translated")** — shown just before the art, in the same card style as the forecast: cards for the shooting stars, the solar wind, the glowing core and the orbiting dots, each with its live reading (storm peak and solar-event count, solar wind speed in mph, strongest flare, asteroids today and how many are potentially hazardous). A card or row is skipped if its data source isn't live.
+- **Cosmic Meteorology** — shown just before the art. An orange all-caps heading over cards, one per element of the artwork, each with its live reading and an icon that matches it: shooting stars (size, storm peak, solar events), solar wind (speed in mph and its pace), coronal mass ejections (how many, how many arcs are shown, how many are heading for Earth), aurora glow (watch or quiet, and the field tilt, Bz), glowing core (strongest flare, flare count) and orbiting dots (asteroids today, how many potentially hazardous). A card or row is skipped if its data source isn't live.
 - **Algorithm Art** — see below.
 
 ## How the data reads as motion (Algorithm Art)
 
 - **Solar-flare intensity** (peak flare class × magnitude in the window) sets the atmospheric core's brightness and radius.
 - **Geomagnetic intensity** (max Kp / 9) sets the shooting stars' size (tail length, stroke width, head size) and speed — calm conditions read as small, slow streaks; storm conditions read as long, fast, thick ones.
-- **Solar wind speed** (live, in mph on the weather screen) sets how fast faint dots stream outward from the glowing core — a faster wind visibly streams faster.
+- **Solar wind speed** (live NOAA reading) sets how fast pale blue streaks flow outward from the glowing core — a faster wind visibly streams faster.
+- **Coronal mass ejections** (the most relevant recent eruptions) each become a wide, soft arc that expands outward from the core, like a cloud thrown off the Sun. A faster eruption crosses the screen sooner, and one predicted to reach Earth is drawn in amber instead of violet.
+- **Aurora watch** (the solar wind's magnetic field tilting south, Bz below −2 nT) hangs a green glow from the top of the sky; the further south the field, the stronger and deeper it gets. With the field northward there is no glow.
 - **Number of space-weather events** (flares + CMEs, plus a bump for any storm) sets shooting-star density.
 - **Each tracked asteroid** becomes one orbiting body.
   - Diameter → body size
   - Velocity → orbital speed
   - Miss distance → orbital radius
 - **Potentially hazardous asteroids**, and generally elevated conditions (an X-class flare or Kp ≥ 5), bring in a restrained amber tint — never a saturated warning color.
+
+Contrast: every meaningful mark keeps at least 3:1 contrast against the background at its blended strength (WCAG 1.4.11) — the orbit lines, core, aurora, arcs and streaks hold their strength for most of their travel and only fade at the very end. The twinkling background stars and soft halos are decorative. Nothing flashes, and `prefers-reduced-motion` slows the motion to a crawl.
 
 Displayed values ease toward the latest fetched numbers rather than snapping, so a data refresh never looks abrupt. The canvas keeps running continuously in the background even while a different screen is showing, so Algorithm Art is always mid-motion when the cycle reaches it.
 
@@ -49,9 +51,9 @@ Every screen keeps running on whatever it last had (or a quiet neutral default o
 
 ## Files
 
-- `index.html` — markup for all six screens plus the canvas and status dot
-- `style.css` — full-viewport layout, the weather "stat screen" style, the canvas/grain styling, and the cross-fade between screens
-- `app.js` — fetches and renders APOD, EPIC, solar wind, and Cosmic Meteorology; runs the Algorithm Art generative engine; and drives the six-screen timed cycle
+- `index.html` — markup for all four screens plus the canvas and status dot
+- `style.css` — full-viewport layout, the Cosmic Meteorology card styles, the canvas/grain styling, and the cross-fade between screens
+- `app.js` — fetches and renders APOD, EPIC and the solar wind; builds the Cosmic Meteorology cards; runs the Algorithm Art generative engine; and drives the four-screen timed cycle
 - `api/nasa-data.js` — the Vercel serverless function that fetches and normalizes APOD, NEO, and DONKI data
 
 No React, TypeScript, build tooling, or npm packages — plain HTML/CSS/JS, deployed as-is.

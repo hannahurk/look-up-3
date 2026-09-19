@@ -29,7 +29,7 @@ body {
 
 /* ---- mode switching ----
    Exactly one of these full-bleed layers is visible at a time: the APOD
-   photo/video, the weather screen, the EPIC Earth image, the artwork key,
+   photo/video, the EPIC Earth image, the Cosmic Meteorology key to the art,
    or the generative artwork itself. They cross-fade
    on a timer, or sooner when the camera sees a new visitor (app.js). */
 
@@ -44,8 +44,7 @@ body {
   transition: opacity 1.2s ease;
 }
 
-body:not(.mode-wx):not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
-body.mode-wx .stat-screen#wx-screen,
+body:not(.mode-key):not(.mode-epic):not(.mode-art) .oculus,
 body.mode-key .stat-screen#key-screen,
 body.mode-epic .epic-screen,
 body.mode-art #art {
@@ -127,8 +126,8 @@ body.mode-art #art {
   background: var(--panel);
 }
 
-/* ---- data screen (weather) ----
-   A dark starfield with big centered stats. */
+/* ---- text screens ----
+   A dark starfield behind the Cosmic Meteorology slide. */
 
 .stat-screen {
   display: flex;
@@ -138,12 +137,6 @@ body.mode-art #art {
   background-color: var(--ink);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Ccircle cx='18' cy='28' r='1' fill='white' opacity='0.8'/%3E%3Ccircle cx='96' cy='84' r='1.4' fill='white' opacity='0.5'/%3E%3Ccircle cx='168' cy='44' r='0.8' fill='white' opacity='0.7'/%3E%3Ccircle cx='64' cy='168' r='1' fill='white' opacity='0.6'/%3E%3Ccircle cx='204' cy='196' r='1.6' fill='white' opacity='0.9'/%3E%3Ccircle cx='34' cy='124' r='0.7' fill='white' opacity='0.4'/%3E%3Ccircle cx='128' cy='16' r='1' fill='white' opacity='0.5'/%3E%3Ccircle cx='216' cy='116' r='0.9' fill='white' opacity='0.6'/%3E%3Ccircle cx='150' cy='150' r='0.6' fill='white' opacity='0.35'/%3E%3Ccircle cx='8' cy='200' r='1.1' fill='white' opacity='0.55'/%3E%3C/svg%3E");
   background-repeat: repeat;
-}
-
-.stat-card {
-  max-width: 1000px;
-  text-align: center;
-  color: var(--paper);
 }
 
 .stat-label {
@@ -156,67 +149,6 @@ body.mode-art #art {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--amber);
-}
-
-.stat-metric {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: clamp(44px, 8vw, 84px);
-  line-height: 1;
-  color: var(--paper);
-}
-
-.stat-metric.secondary {
-  font-size: clamp(18px, 2.4vw, 24px);
-  font-weight: 600;
-  color: #d6d9e2;
-  margin-top: 14px;
-}
-
-.stat-unit {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.05em;
-  color: var(--slate);
-  text-transform: uppercase;
-}
-
-.stat-badge {
-  display: inline-block;
-  margin-top: 20px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.stat-badge[hidden] { display: none; }
-
-.stat-badge.aurora {
-  background: rgba(242, 169, 59, 0.16);
-  color: var(--amber);
-}
-
-.stat-alert {
-  margin: 20px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--slate);
-}
-
-.stat-card.has-error .stat-alert { color: #e07a6b; }
-
-#wx-card.is-south .stat-metric:first-child .stat-value { color: var(--amber); }
-
-@media (max-width: 780px) {
-  .stat-card { max-width: 100%; }
 }
 
 /* ---- Cards ----
