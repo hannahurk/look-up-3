@@ -344,7 +344,7 @@ body.mode-art .grain {
 /* ---- Artwork key ("Today's sky, translated") ----
    Its own slide, shown just before the artwork. It reuses the forecast card
    styles (.fc-day, .fc-date, .fc-cond, .fc-row) with a small icon that
-   matches the element in the art, plus a muted one-line note. */
+   matches the element in the art. */
 
 .key-screen { padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 48px); }
 
@@ -377,13 +377,6 @@ body.mode-art .grain {
 }
 
 .fc-row.is-warn b { color: var(--amber); }
-
-.fc-note {
-  margin: 0.9em 0 0;
-  font-size: clamp(12px, min(1.4vw, 2.6vh), 22px);
-  line-height: 1.4;
-  color: var(--slate);
-}
 
 /* ---- status dot ----
    A single small dot — never a panel or numeric readout. */

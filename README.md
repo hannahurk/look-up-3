@@ -22,7 +22,7 @@ Each slide holds for 15 seconds, then the sign moves on to the next — and a ca
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
 - **Space Weather Forecast** — an orange all-caps heading over three day cards built from NOAA's official three-day forecast: a color-coded level from Calm to Extreme storm, plus the chance of a radio blackout and of a radiation storm.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
-- **Artwork key ("Today's sky, translated")** — shown just before the art, in the same card style as the forecast: three cards for the shooting stars, the glowing core and the orbiting dots, each with its live reading (storm peak and solar-event count, strongest flare, asteroids today and how many are potentially hazardous) and a one-line note on what it means. A card or row is skipped if its data source isn't live.
+- **Artwork key ("Today's sky, translated")** — shown just before the art, in the same card style as the forecast: three cards for the shooting stars, the glowing core and the orbiting dots, each with its live reading (storm peak and solar-event count, strongest flare, asteroids today and how many are potentially hazardous). A card or row is skipped if its data source isn't live.
 - **Algorithm Art** — see below.
 
 ## How the data reads as motion (Algorithm Art)

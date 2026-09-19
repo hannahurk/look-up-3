@@ -315,7 +315,7 @@
   }
 
   // The artwork key slide: three cards, in the same style as the forecast
-  // cards, saying what each part of the artwork is showing right now. A card
+  // cards, showing what each part of the artwork is doing right now. A card
   // or row is skipped when its source isn't live, so the key never claims
   // "quiet" for data it doesn't have.
   function paintArtKey() {
@@ -336,10 +336,7 @@
         rows.push(['Storm peak', sw.kpIndex > 0 ? `Kp ${sw.kpIndex}` : 'None']);
       }
       if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
-      cards.push({
-        label: 'Shooting stars', glyph: 'streak', value, rows,
-        note: 'Storm level sets size and speed. Solar events set how many.',
-      });
+      cards.push({ label: 'Shooting stars', glyph: 'streak', value, rows });
     }
     if (sw && status.flares === 'live') {
       const strongest = strongestFlareClass(sw.flareIntensity);
@@ -347,7 +344,6 @@
         label: 'Glowing core', glyph: 'core',
         value: strongest ? `${strongest} flare` : 'No flares',
         rows: [['Flares this week', String(sw.flareCount)]],
-        note: 'The Sun. Brighter when flares are stronger.',
       });
     }
     if (status.neo === 'live' && latestData.asteroids) {
@@ -356,8 +352,7 @@
       cards.push({
         label: 'Orbiting dots', glyph: 'orbit',
         value: count === 0 ? 'None today' : plural(count, 'asteroid', 'asteroids'),
-        rows: hazardous ? [['Potentially hazardous', String(hazardous), true]] : [],
-        note: 'Bigger dot, bigger rock. Faster orbit, faster flyby. Wider orbit, farther miss.',
+        rows: count === 0 ? [] : [['Potentially hazardous', String(hazardous), hazardous > 0]],
       });
     }
 
@@ -399,11 +394,6 @@
         row.append(n, v);
         card.appendChild(row);
       });
-
-      const note = document.createElement('p');
-      note.className = 'fc-note';
-      note.textContent = c.note;
-      card.appendChild(note);
       box.appendChild(card);
     });
   }
