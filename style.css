@@ -168,13 +168,6 @@ body.mode-art #art {
   gap: clamp(10px, 1.6vw, 24px);
 }
 
-.fc-empty {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: clamp(18px, 2.4vw, 36px);
-  color: var(--slate);
-}
-
 .fc-day {
   padding: clamp(14px, 2.6vh, 32px);
   border: 1px solid rgba(154, 161, 180, 0.4);
@@ -212,18 +205,24 @@ body.mode-art #art {
 .fc-row b { color: var(--paper); font-weight: 600; }
 .fc-row.is-warn b { color: var(--amber); }
 
-/* Cards come in one after another each time the screen appears. */
-body.mode-key .fc-day {
+/* Each Cosmic Meteorology slide shows one card, large, and fades it in. */
+.key-screen .fc { max-width: 900px; }
+.key-screen .fc-days { grid-template-columns: 1fr; }
+.key-screen .fc-day { display: none; }
+.key-screen .fc-day.is-active {
+  display: block;
   animation: fc-in 0.8s ease backwards;
-  animation-delay: calc(var(--i, 0) * 0.5s);
 }
+.key-screen .fc-date { font-size: clamp(14px, min(2.4vw, 4vh), 34px); }
+.key-screen .fc-cond { font-size: clamp(30px, min(6.4vw, 11vh), 100px); }
+.key-screen .fc-row { font-size: clamp(16px, min(2.6vw, 4.4vh), 40px); }
 
 @keyframes fc-in {
   from { opacity: 0; transform: translateY(10px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.mode-key .fc-day { animation: none; }
+  .key-screen .fc-day.is-active { animation: none; }
 }
 
 @media (max-width: 560px) {
@@ -289,8 +288,6 @@ body.mode-art .grain {
   background: #a8d1ff;
   box-shadow: 0.36em 0 0 -0.03em rgba(168, 209, 255, 0.7), 0.7em 0 0 -0.06em rgba(168, 209, 255, 0.4);
 }
-
-.fc-days.is-quad { grid-template-columns: repeat(2, 1fr); }
 
 .key-glyph.is-orbit {
   width: 0.5em;

@@ -1,6 +1,6 @@
 # Space, Translated
 
-A ceiling sign that cycles through four full-screen views of live space data: today's Astronomy Picture of the Day, a live Earth image, a card-style "Cosmic Meteorology" key that explains the artwork, and "Algorithm Art" — a generative canvas piece that translates live space-weather and near-Earth-object data into slow, ambient motion (not a dashboard, not a literal solar-system diagram).
+A ceiling sign that cycles through four full-screen views of live space data: today's Astronomy Picture of the Day, a live Earth image, a series of "Cosmic Meteorology" slides that explain the artwork one element at a time, and "Algorithm Art" — a generative canvas piece that translates live space-weather and near-Earth-object data into slow, ambient motion (not a dashboard, not a literal solar-system diagram).
 
 ## What's driving it
 
@@ -14,13 +14,13 @@ A Vercel serverless function (`api/nasa-data.js`) is the only thing that holds t
 
 Some sources don't need a key at all, so `app.js` fetches them directly: [NASA's EPIC API](https://epic.gsfc.nasa.gov/) (Earth imagery) and [NOAA SWPC](https://www.swpc.noaa.gov/) (real-time solar wind speed and magnetic-field tilt). The browser never talks to `api.nasa.gov` itself — only `/api/nasa-data`, EPIC, and NOAA.
 
-## The four screens
+## The slides
 
-Each slide holds for 15 seconds, then the sign moves on to the next — and a camera detecting a new visitor (movement after a few seconds of stillness) advances it immediately. The order: **APOD photo → EPIC Earth image → Cosmic Meteorology → Algorithm Art → back to APOD.**
+Each slide holds for 15 seconds, then the sign moves on to the next — and a camera detecting a new visitor (movement after a few seconds of stillness) advances it immediately. The order: **APOD photo → EPIC Earth image → six Cosmic Meteorology slides → Algorithm Art → back to APOD.**
 
 - **APOD** — full-bleed image or video, whichever picture NASA published today.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
-- **Cosmic Meteorology** — shown just before the art. An orange all-caps heading over cards, one per element of the artwork, each with its live reading and an icon that matches it: shooting stars (size, storm peak, solar events), solar wind (speed in mph and its pace), coronal mass ejections (how many, how many arcs are shown, how many are heading for Earth), aurora glow (watch or quiet, and the field tilt, Bz), glowing core (strongest flare, flare count) and orbiting dots (asteroids today, how many potentially hazardous). A card or row is skipped if its data source isn't live.
+- **Cosmic Meteorology (six slides)** — shown just before the art. Each slide has the orange all-caps heading and one large card, with the live reading and an icon that matches that element of the art: **shooting stars** (size, storm peak, solar events), **solar wind** (speed in mph and its pace), **coronal mass ejections** (how many, how many arcs are shown, how many are heading for Earth), **aurora glow** (watch or quiet, and the field tilt, Bz), **glowing core** (strongest flare, flare count) and **orbiting dots** (asteroids today, how many potentially hazardous). A card or row is skipped if its data source isn't live, and a card with no live data has no slide.
 - **Algorithm Art** — see below.
 
 ## How the data reads as motion (Algorithm Art)
@@ -53,9 +53,9 @@ Every screen keeps running on whatever it last had (or a quiet neutral default o
 
 ## Files
 
-- `index.html` — markup for all four screens plus the canvas and status dot
+- `index.html` — markup for the slides plus the canvas and status dot
 - `style.css` — full-viewport layout, the Cosmic Meteorology card styles, the canvas/grain styling, and the cross-fade between screens
-- `app.js` — fetches and renders APOD, EPIC and the solar wind; builds the Cosmic Meteorology cards; runs the Algorithm Art generative engine; and drives the four-screen timed cycle
+- `app.js` — fetches and renders APOD, EPIC and the solar wind; builds the Cosmic Meteorology cards; runs the Algorithm Art generative engine; and drives the timed slide cycle
 - `api/nasa-data.js` — the Vercel serverless function that fetches and normalizes APOD, NEO, and DONKI data
 
 No React, TypeScript, build tooling, or npm packages — plain HTML/CSS/JS, deployed as-is.

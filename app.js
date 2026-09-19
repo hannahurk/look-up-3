@@ -198,6 +198,17 @@
   // The artwork key slide: one card per element of the artwork, showing what
   // it's doing right now. A card or row is skipped when its source isn't live, so the key never claims
   // "quiet" for data it doesn't have.
+  let keyCardCount = 0;
+  let keySignature = '';
+
+  // Only the card for the current Cosmic Meteorology slide is shown.
+  function showKeyCard() {
+    const index = mode.startsWith('key:') ? Number(mode.slice(4)) : -1;
+    document.querySelectorAll('#key-cards .fc-day').forEach((card) => {
+      card.classList.toggle('is-active', Number(card.dataset.i) === index);
+    });
+  }
+
   function paintArtKey() {
     const box = document.getElementById('key-cards');
     if (!box) return;
@@ -263,19 +274,22 @@
       });
     }
 
-    box.textContent = '';
-    box.classList.toggle('is-quad', cards.length === 4);
-    if (cards.length === 0) {
-      const empty = document.createElement('p');
-      empty.className = 'fc-empty';
-      empty.textContent = 'Waiting for live data';
-      box.appendChild(empty);
+    // Each card is its own slide, so the number of slides follows the cards.
+    // Repaint only when something changed, so a slide doesn't re-animate every
+    // time the wind reading refreshes.
+    const signature = JSON.stringify(cards);
+    keyCardCount = cards.length;
+    if (signature === keySignature) {
+      showKeyCard();
       return;
     }
+    keySignature = signature;
+
+    box.textContent = '';
     cards.forEach((c, i) => {
       const card = document.createElement('div');
       card.className = 'fc-day';
-      card.style.setProperty('--i', i);
+      card.dataset.i = String(i);
 
       const label = document.createElement('div');
       label.className = 'fc-date';
@@ -304,6 +318,7 @@
       });
       box.appendChild(card);
     });
+    showKeyCard();
   }
 
   // ---------- unified NASA data (APOD, space weather, NEO) ----------
@@ -795,22 +810,32 @@
   // ---------- slide cycle ----------
   //
   // Each slide holds for SLIDE_DWELL_MS, then the sign moves to the next one:
-  // APOD photo → EPIC Earth image → Cosmic Meteorology (the key to the art) →
-  // Algorithm Art → back to APOD. Movement cuts in
-  // early: when the camera (see startCameraMotion) sees a new visitor — motion
+  // APOD photo → EPIC Earth image → one Cosmic Meteorology slide per card
+  // (shooting stars, solar wind, coronal mass ejections, aurora, glowing core,
+  // orbiting dots) → Algorithm Art → back to APOD. A card whose data source
+  // isn't live has no slide. Movement cuts in early: when the camera (see startCameraMotion) sees a new visitor — motion
   // after a few seconds of stillness — the sign advances right away and the
   // timer restarts. Continuous movement doesn't skip screens. Mouse/touch/
   // keyboard activity counts as movement too, for desks and testing.
 
   const SLIDE_DWELL_MS = 15000; // every slide holds at least this long unless a visitor arrives
-  const MODE_ORDER = ['apod', 'epic', 'key', 'art'];
   let dwellTimer;
   let mode = 'apod';
 
+  function slideSequence() {
+    const sequence = ['apod', 'epic'];
+    for (let i = 0; i < keyCardCount; i++) sequence.push('key:' + i);
+    sequence.push('art');
+    return sequence;
+  }
+
   function advance() {
-    mode = MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length];
+    const sequence = slideSequence();
+    mode = sequence[(sequence.indexOf(mode) + 1) % sequence.length];
     document.body.classList.remove('mode-key', 'mode-epic', 'mode-art');
-    if (mode !== 'apod') document.body.classList.add('mode-' + mode);
+    if (mode.startsWith('key:')) document.body.classList.add('mode-key');
+    else if (mode !== 'apod') document.body.classList.add('mode-' + mode);
+    showKeyCard();
     clearTimeout(dwellTimer);
     dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);
   }
