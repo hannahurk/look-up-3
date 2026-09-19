@@ -145,7 +145,7 @@
     const [year, month, day] = datePart.split('-');
     const img = document.getElementById('epic-image');
     img.src = `https://epic.gsfc.nasa.gov/archive/natural/${year}/${month}/${day}/jpg/${entry.image}.jpg`;
-    img.alt = `Earth, imaged by NASA's EPIC camera on ${datePart}`;
+    img.alt = `Earth, photographed from space on ${datePart}`;
   }
 
   // ---------- Solar wind (NOAA SWPC — near-real-time, no key required) ----------
@@ -349,12 +349,12 @@
     const status = (latestData && latestData.sourceStatus) || {};
     if (sw && status.flares === 'live' && status.cmes === 'live') {
       if (sw.flareCount === 0 && sw.cmeCount === 0) {
-        paras.push('NASA logged no solar flares or coronal mass ejections over the past week.');
+        paras.push('The Sun produced no solar flares or coronal mass ejections over the past week.');
       } else {
         const strongest = strongestFlareClass(sw.flareIntensity);
-        let text = `Over the past week, NASA logged ${plural(sw.flareCount, 'solar flare', 'solar flares')}`;
+        let text = `Over the past week, the Sun produced ${plural(sw.flareCount, 'solar flare', 'solar flares')}`;
         if (strongest && sw.flareCount > 0) text += ` (the strongest ${/^[AMX]/.test(strongest) ? 'an' : 'a'} ${strongest})`;
-        text += ` and ${plural(sw.cmeCount, 'coronal mass ejection', 'coronal mass ejections')}, which are clouds of charged particles thrown off the Sun.`;
+        text += ` and ${plural(sw.cmeCount, 'coronal mass ejection', 'coronal mass ejections')}, which are huge clouds of charged particles.`;
         if (status.storms === 'live' && sw.kpIndex >= 5) text += ` A geomagnetic storm peaked at Kp ${sw.kpIndex}.`;
         paras.push(text);
       }
@@ -470,7 +470,7 @@
     const days = forecastDays();
     if (days.length) {
       const headline = forecastHeadline(days);
-      rows.push(['forecast', `NOAA’s three-day forecast: ${headline.charAt(0).toLowerCase()}${headline.slice(1)}.`]);
+      rows.push(['forecast', `The three-day forecast: ${headline.charAt(0).toLowerCase()}${headline.slice(1)}.`]);
     }
 
     list.textContent = '';
@@ -511,7 +511,7 @@
     const live = isAnyLive(latestData.sourceStatus);
     statusEl.classList.toggle('is-live', live);
     statusText.textContent = live
-      ? 'Live NASA data connected.'
+      ? 'Live data connected.'
       : 'Live data unavailable — showing a quiet fallback state.';
   }
 
