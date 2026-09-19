@@ -23,14 +23,18 @@
     <div class="stat-screen" id="wx-screen">
       <div class="stat-card" id="wx-card">
         <span class="stat-label">Cosmic Meteorology</span>
-        <div class="stat-metric">
-          <span class="stat-value" id="wind-speed">&mdash;</span><span class="stat-unit" id="wind-unit">mph solar wind</span>
+        <div class="wx-report" id="wx-report" aria-live="polite">
+          <p class="wx-para">Checking conditions&hellip;</p>
         </div>
-        <div class="stat-metric secondary">
-          <span class="stat-value" id="wind-bz">&mdash;</span><span class="stat-unit" id="bz-unit">nT Bz</span>
+        <div class="wx-ticker">
+          <div class="stat-metric">
+            <span class="stat-value" id="wind-speed">&mdash;</span><span class="stat-unit" id="wind-unit">mph solar wind</span>
+          </div>
+          <div class="stat-metric">
+            <span class="stat-value" id="wind-bz">&mdash;</span><span class="stat-unit" id="bz-unit">nT Bz</span>
+          </div>
+          <span class="stat-badge aurora" id="aurora-badge" hidden>&#9733; Aurora Watch</span>
         </div>
-        <span class="stat-badge aurora" id="aurora-badge" hidden>&#9733; Aurora Watch</span>
-        <p class="stat-alert" id="wx-alert">Checking conditions&hellip;</p>
       </div>
     </div>
 

@@ -166,8 +166,8 @@ body.is-idle.mode-art #art {
   background: var(--panel);
 }
 
-/* ---- data screen (weather) ----
-   A dark starfield with big centered stats. */
+/* ---- data screen (Cosmic Meteorology) ----
+   A dark starfield with the written forecast and a live solar-wind ticker. */
 
 .stat-screen {
   display: flex;
@@ -180,42 +180,86 @@ body.is-idle.mode-art #art {
 }
 
 .stat-card {
-  max-width: 640px;
-  text-align: center;
+  width: 100%;
+  max-width: 1100px;
   color: var(--paper);
 }
 
 .stat-label {
   display: block;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  letter-spacing: 0.03em;
-  font-size: 13px;
+  letter-spacing: 0.08em;
+  font-size: clamp(14px, 1.5vw, 22px);
   color: var(--amber);
   text-transform: uppercase;
-  margin-bottom: 16px;
+  margin-bottom: clamp(14px, 2.4vh, 28px);
 }
 
-.stat-metric {
+/* The forecast reads like a teleprompter: paragraphs fade in one after
+   another each time the screen comes up. */
+.wx-report {
+  font-size: clamp(17px, min(2vw, 3.1vh), 30px);
+  line-height: 1.5;
+}
+
+.wx-para {
+  margin: 0 0 0.9em;
+  color: #e3e6ee;
+}
+
+.wx-outlook {
+  margin-top: 1.1em;
+  padding-top: 0.9em;
+  border-top: 2px solid rgba(242, 169, 59, 0.5);
+  font-weight: 600;
+  color: var(--paper);
+}
+
+.wx-outlook-label {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.8em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+body.mode-wx .wx-para {
+  animation: wx-in 0.9s ease backwards;
+  animation-delay: calc(var(--i, 0) * 0.9s);
+}
+
+@keyframes wx-in {
+  from { opacity: 0; transform: translateY(10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.mode-wx .wx-para { animation: none; }
+}
+
+/* Live NOAA solar wind, kept as a small "current conditions" ticker. */
+.wx-ticker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px clamp(16px, 3vw, 40px);
+  margin-top: clamp(12px, 2vh, 24px);
+  padding-top: clamp(12px, 2vh, 20px);
+  border-top: 1px solid rgba(154, 161, 180, 0.35);
+}
+
+.wx-ticker .stat-metric {
   display: flex;
   align-items: baseline;
-  justify-content: center;
   gap: 10px;
+  font-size: clamp(20px, 2.4vw, 34px);
   font-weight: 700;
-  font-size: clamp(44px, 8vw, 84px);
   line-height: 1;
   color: var(--paper);
 }
 
-.stat-metric.secondary {
-  font-size: clamp(18px, 2.4vw, 24px);
-  font-weight: 600;
-  color: #d6d9e2;
-  margin-top: 14px;
-}
-
 .stat-unit {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 13px;
+  font-size: clamp(11px, 1.05vw, 15px);
   font-weight: 400;
   letter-spacing: 0.05em;
   color: var(--slate);
@@ -224,35 +268,23 @@ body.is-idle.mode-art #art {
 
 .stat-badge {
   display: inline-block;
-  margin-top: 20px;
   padding: 5px 14px;
   border-radius: 999px;
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 12px;
+  font-size: clamp(11px, 1.05vw, 15px);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+.stat-badge[hidden] { display: none; }
 
 .stat-badge.aurora {
   background: rgba(242, 169, 59, 0.16);
   color: var(--amber);
 }
 
-.stat-alert {
-  margin: 20px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--slate);
-}
-
-.stat-card.has-error .stat-alert { color: #e07a6b; }
-
 #wx-card.is-south .stat-metric:first-child .stat-value { color: var(--amber); }
-
-@media (max-width: 780px) {
-  .stat-card { max-width: 100%; }
-}
 
 /* ---- generative artwork ("Algorithm Art" mode) ---- */
 
