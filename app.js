@@ -432,7 +432,7 @@
         : lerp(minRadius, maxRadius, rand());
       const bodyRadius = a.diameter > 0 ? logMapRange(a.diameter, 5, 2000, 4, 11) * ui : 6 * ui;
       // Radians per second: one lap every ~1-5 minutes, slow enough to read as drifting.
-      const angularSpeed = a.velocity > 0 ? mapRange(a.velocity, 3000, 120000, 0.02, 0.1) : 0.05;
+      const angularSpeed = a.velocity > 0 ? mapRange(a.velocity, 3000, 120000, 0.022, 0.11) : 0.055;
 
       return {
         radius,
