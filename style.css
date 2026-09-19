@@ -139,22 +139,9 @@ body.mode-art #art {
   background-repeat: repeat;
 }
 
-.stat-label {
-  display: block;
-  margin: 0 0 clamp(16px, 3vh, 36px);
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: clamp(24px, min(4vw, 7vh), 64px);
-  font-weight: 500;
-  line-height: 1.1;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-
 /* ---- Cards ----
-   Shared by the artwork key slide: a mono caps label, an icon plus one bold
-   word, and single-line rows. The heading is the shared orange all-caps H1
-   (.stat-label). */
+   The Cosmic Meteorology slides: a mono caps label, an icon plus one bold
+   word, and single-line rows. */
 
 .fc {
   width: 100%;

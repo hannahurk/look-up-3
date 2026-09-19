@@ -223,8 +223,8 @@
       let value = null;
       if (status.storms === 'live') {
         const intensity = sw.geomagneticIntensity || 0;
-        value = intensity < 0.15 ? 'Small & slow' : intensity < 0.6 ? 'Medium' : 'Long & fast';
-        rows.push(['Storm peak', sw.kpIndex > 0 ? `Kp ${sw.kpIndex}` : 'None']);
+        value = intensity < 0.15 ? 'Small and Slow' : intensity < 0.6 ? 'Medium' : 'Long and Fast';
+        rows.push(['Storm peak', sw.kpIndex > 0 ? `${sw.kpIndex} of 9` : 'None']);
       }
       if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
       cards.push({ label: 'Shooting stars', glyph: 'streak', value, rows });
@@ -234,7 +234,7 @@
       const pace = wind.kms < 350 ? 'Gentle' : wind.kms < 500 ? 'Steady' : wind.kms < 700 ? 'Brisk' : 'Fast';
       cards.push({
         label: 'Solar wind', glyph: 'wind',
-        value: `${wind.mph.toLocaleString('en-US')} mph`,
+        value: `${wind.mph.toLocaleString('en-US')} Miles per Hour`,
         rows: [['Streaming pace', pace]],
       });
     }
@@ -242,7 +242,7 @@
       const heading = latestData.cmes.filter((c) => c.earth === 'predicted').length;
       cards.push({
         label: 'Coronal mass ejections', glyph: 'ring',
-        value: sw.cmeCount === 0 ? 'None this week' : `${plural(sw.cmeCount, 'ejection', 'ejections')} this week`,
+        value: sw.cmeCount === 0 ? 'None This Week' : `${plural(sw.cmeCount, 'Ejection', 'Ejections')} This Week`,
         rows: sw.cmeCount === 0 ? [] : [
           ['Rings shown', String(latestData.cmes.length)],
           ['Heading for Earth', String(heading), heading > 0],
@@ -252,15 +252,15 @@
     if (wind) {
       cards.push({
         label: 'Aurora glow', glyph: 'aurora',
-        value: wind.bz < -2 ? 'Aurora watch' : 'Quiet',
-        rows: [['Magnetic field tilt (Bz)', `${wind.bz > 0 ? '+' : ''}${wind.bz} nT`]],
+        value: wind.bz < -2 ? 'Aurora Watch' : 'Quiet',
+        rows: [['Magnetic field tilt', `${wind.bz > 0 ? '+' : ''}${wind.bz} nanotesla`]],
       });
     }
     if (sw && status.flares === 'live') {
       const strongest = strongestFlareClass(sw.flareIntensity);
       cards.push({
         label: 'Glowing core', glyph: 'core',
-        value: strongest ? `${strongest} flare` : 'No flares',
+        value: strongest ? `${strongest} Flare` : 'No Flares',
         rows: [['Flares this week', String(sw.flareCount)]],
       });
     }
@@ -269,7 +269,7 @@
       const hazardous = latestData.asteroids.filter((a) => a.hazardous).length;
       cards.push({
         label: 'Orbiting dots', glyph: 'orbit',
-        value: count === 0 ? 'None today' : plural(count, 'asteroid', 'asteroids'),
+        value: count === 0 ? 'None Today' : plural(count, 'Asteroid', 'Asteroids'),
         rows: count === 0 ? [] : [['Potentially hazardous', String(hazardous), hazardous > 0]],
       });
     }
@@ -809,7 +809,8 @@
 
   // ---------- slide cycle ----------
   //
-  // Each slide holds for SLIDE_DWELL_MS, then the sign moves to the next one:
+  // Each slide holds for 12-15 seconds (random within that range), then the
+  // sign moves to the next one:
   // APOD photo → EPIC Earth image → one Cosmic Meteorology slide per card
   // (shooting stars, solar wind, coronal mass ejections, aurora, glowing core,
   // orbiting dots) → Algorithm Art → back to APOD. A card whose data source
@@ -818,7 +819,9 @@
   // timer restarts. Continuous movement doesn't skip screens. Mouse/touch/
   // keyboard activity counts as movement too, for desks and testing.
 
-  const SLIDE_DWELL_MS = 15000; // every slide holds at least this long unless a visitor arrives
+  const SLIDE_DWELL_MIN_MS = 12000; // every slide holds 12-15 s unless a visitor arrives
+  const SLIDE_DWELL_MAX_MS = 15000;
+  const nextDwell = () => SLIDE_DWELL_MIN_MS + Math.random() * (SLIDE_DWELL_MAX_MS - SLIDE_DWELL_MIN_MS);
   let dwellTimer;
   let mode = 'apod';
 
@@ -837,14 +840,14 @@
     else if (mode !== 'apod') document.body.classList.add('mode-' + mode);
     showKeyCard();
     clearTimeout(dwellTimer);
-    dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);
+    dwellTimer = setTimeout(advance, nextDwell());
   }
 
   function startSlideCycle() {
     ['mousemove', 'touchstart', 'touchmove', 'keydown', 'click', 'scroll'].forEach((evt) => {
       window.addEventListener(evt, onMotion, { passive: true });
     });
-    dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);
+    dwellTimer = setTimeout(advance, nextDwell());
   }
 
   // ---------- camera motion ----------
