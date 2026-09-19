@@ -311,7 +311,87 @@
         daysEl.appendChild(card);
       });
     }
+    paintCMEs();
     paintArtKey();
+  }
+
+  // Coronal mass ejections under the forecast cards: one card per recent
+  // eruption from the live data feed. Hidden unless that source is live, so
+  // "no ejections" is only ever shown when we actually looked.
+  function utcDay(iso) {
+    const d = new Date(iso);
+    if (!iso || Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  }
+
+  function utcStamp(iso) {
+    const d = new Date(iso);
+    if (!iso || Number.isNaN(d.getTime())) return '—';
+    const text = d.toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC',
+    });
+    return `${text} UTC`;
+  }
+
+  function paintCMEs() {
+    const section = document.getElementById('fc-cme');
+    const box = document.getElementById('cme-cards');
+    if (!section || !box) return;
+
+    const live = latestData && latestData.sourceStatus && latestData.sourceStatus.cmes === 'live' && Array.isArray(latestData.cmes);
+    section.hidden = !live;
+    box.textContent = '';
+    if (!live) return;
+
+    if (latestData.cmes.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'fc-empty';
+      empty.textContent = 'None this week';
+      box.appendChild(empty);
+      return;
+    }
+
+    latestData.cmes.forEach((c, i) => {
+      const card = document.createElement('div');
+      card.className = 'fc-day';
+      // Same dot colors as the forecast cards: slower is calmer.
+      card.dataset.g = c.speed === null ? '0' : c.speed < 500 ? '0' : c.speed < 1000 ? '1' : c.speed < 2000 ? '2' : '3';
+      card.style.setProperty('--i', i + 3);
+
+      const date = document.createElement('div');
+      date.className = 'fc-date';
+      date.textContent = utcDay(c.startTime);
+
+      const cond = document.createElement('div');
+      cond.className = 'fc-cond';
+      const dot = document.createElement('span');
+      dot.className = 'fc-dot';
+      dot.setAttribute('aria-hidden', 'true');
+      cond.append(dot, c.speed === null ? 'Speed n/a' : `${Math.round(c.speed).toLocaleString('en-US')} km/s`);
+      card.append(date, cond);
+
+      const rows = [];
+      if (c.earth === 'predicted') {
+        rows.push(['Earth impact', c.glancing ? 'Glancing blow' : 'Predicted', true]);
+        if (c.arrivalTime) {
+          const passed = new Date(c.arrivalTime).getTime() < Date.now();
+          rows.push([passed ? 'Est. arrival (past)' : 'Est. arrival', utcStamp(c.arrivalTime)]);
+        }
+      } else {
+        rows.push(['Earth impact', c.earth === 'not-expected' ? 'Not expected' : 'Not modeled']);
+      }
+      rows.forEach(([name, value, warn]) => {
+        const row = document.createElement('div');
+        row.className = 'fc-row' + (warn ? ' is-warn' : '');
+        const n = document.createElement('span');
+        n.textContent = name;
+        const v = document.createElement('b');
+        v.textContent = value;
+        row.append(n, v);
+        card.appendChild(row);
+      });
+      box.appendChild(card);
+    });
   }
 
   // The artwork key slide: three cards, in the same style as the forecast
@@ -407,6 +487,7 @@
       storms: 'unavailable', apod: 'unavailable',
     },
     spaceWeather: { flareCount: 0, flareIntensity: 0, cmeCount: 0, cmeSpeed: 0, geomagneticIntensity: 0, kpIndex: 0 },
+    cmes: [],
     asteroids: [],
     apod: null,
   };

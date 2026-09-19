@@ -297,6 +297,26 @@ body.mode-art #art {
 
 .fc-row b { color: var(--paper); font-weight: 600; }
 
+/* Coronal mass ejections sit under the day cards. With two rows of cards the
+   type is a bit smaller so both fit. */
+.fc-cme { margin-top: clamp(14px, 2.6vh, 34px); }
+
+.fc-subhead {
+  margin: 0 0 clamp(8px, 1.4vh, 18px);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: clamp(15px, min(2.2vw, 3.8vh), 36px);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.forecast-screen .fc-day { padding: clamp(12px, 2vh, 26px); }
+.forecast-screen .fc-date { font-size: clamp(12px, min(1.5vw, 2.5vh), 22px); }
+.forecast-screen .fc-cond { font-size: clamp(20px, min(3vw, 5vh), 50px); margin: 0.4em 0 0.5em; }
+.forecast-screen .fc-row { font-size: clamp(13px, min(1.45vw, 2.5vh), 24px); }
+.forecast-screen .fc-row.is-warn b { color: var(--amber); }
+
 /* Cards come in one after another each time the screen appears. */
 body.mode-forecast .fc-day,
 body.mode-key .fc-day {

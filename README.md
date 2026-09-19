@@ -9,7 +9,7 @@ A Vercel serverless function (`api/nasa-data.js`) is the only thing that holds t
 - [`planetary/apod`](https://api.nasa.gov) — today's Astronomy Picture of the Day
 - [`neo/rest/v1/feed`](https://api.nasa.gov) — today's near-Earth objects
 - [`DONKI/FLR`](https://api.nasa.gov) — solar flares, trailing ~7 days
-- [`DONKI/CME`](https://api.nasa.gov) — coronal mass ejections, trailing ~7 days
+- [`DONKI/CME`](https://api.nasa.gov) — coronal mass ejections, trailing ~7 days (also passed through as the three most recent eruptions for the forecast slide)
 - [`DONKI/GST`](https://api.nasa.gov) — geomagnetic storms, trailing ~7 days
 
 Some sources don't need a key at all, so `app.js` fetches them directly: [NASA's EPIC API](https://epic.gsfc.nasa.gov/) (Earth imagery) and [NOAA SWPC](https://www.swpc.noaa.gov/) (real-time solar wind, the Kp index, and NOAA's three-day space weather scales forecast). The browser never talks to `api.nasa.gov` itself — only `/api/nasa-data`, EPIC, and NOAA.
@@ -20,7 +20,7 @@ Each slide holds for 15 seconds, then the sign moves on to the next — and a ca
 
 - **APOD** — full-bleed image or video, whichever NASA published today.
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
-- **Space Weather Forecast** — an orange all-caps heading over three day cards built from NOAA's official three-day forecast: a color-coded level from Calm to Extreme storm, plus the chance of a radio blackout and of a radiation storm.
+- **Space Weather Forecast** — an orange all-caps heading over three day cards built from NOAA's official three-day forecast: a color-coded level from Calm to Extreme storm, plus the chance of a radio blackout and of a radiation storm. Below them, a row of cards for the most recent coronal mass ejections (from the live DONKI feed): when each erupted, its speed, and whether an Earth impact is predicted, with the estimated arrival time when there is one.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
 - **Artwork key ("Today's sky, translated")** — shown just before the art, in the same card style as the forecast: three cards for the shooting stars, the glowing core and the orbiting dots, each with its live reading (storm peak and solar-event count, strongest flare, asteroids today and how many are potentially hazardous). A card or row is skipped if its data source isn't live.
 - **Algorithm Art** — see below.

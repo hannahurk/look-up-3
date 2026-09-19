@@ -107,6 +107,54 @@ function normalizeAsteroids(neoFeed) {
   });
 }
 
+// Boils a DONKI CME record down to what the sign shows: when it erupted, how
+// fast it's moving, and whether an Earth impact is predicted. "Predicted"
+// means a model run gives an Earth arrival time; "not-expected" means a model
+// run exists but shows no Earth impact; "unknown" means no model run at all.
+// A glancing blow counts as predicted even when no arrival time is given.
+function summarizeCME(cme) {
+  const analyses = Array.isArray(cme.cmeAnalyses) ? cme.cmeAnalyses : [];
+  const analysis = analyses.find((a) => a && a.isMostAccurate) || analyses[0] || null;
+  const speed = analysis && typeof analysis.speed === 'number' ? analysis.speed : null;
+  const models = analysis && Array.isArray(analysis.enlilList) ? analysis.enlilList : [];
+
+  let arrivalTime = null;
+  let glancing = false;
+  for (const model of models) {
+    if (!model) continue;
+    if (model.estimatedShockArrivalTime && !arrivalTime) arrivalTime = model.estimatedShockArrivalTime;
+    if (model.isEarthGB) glancing = true;
+    for (const impact of Array.isArray(model.impactList) ? model.impactList : []) {
+      if (impact && /earth/i.test(impact.location || '')) {
+        if (!arrivalTime) arrivalTime = impact.arrivalTime || null;
+        if (impact.isGlancingBlow) glancing = true;
+      }
+    }
+  }
+
+  return {
+    startTime: cme.startTime || null,
+    speed,
+    earth: arrivalTime || glancing ? 'predicted' : models.length > 0 ? 'not-expected' : 'unknown',
+    arrivalTime,
+    glancing,
+  };
+}
+
+// Three to show: any eruption still expected to reach Earth comes first
+// (soonest arrival first, so an older one isn't cut off), then the most recent.
+function recentCMEs(cmes) {
+  const now = Date.now();
+  const all = cmes.map(summarizeCME);
+  const upcoming = all
+    .filter((c) => c.earth === 'predicted' && (!c.arrivalTime || new Date(c.arrivalTime).getTime() > now))
+    .sort((a, b) => new Date(a.arrivalTime || 8.64e15) - new Date(b.arrivalTime || 8.64e15));
+  const rest = all
+    .filter((c) => !upcoming.includes(c))
+    .sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
+  return [...upcoming, ...rest].slice(0, 3);
+}
+
 module.exports = async (req, res) => {
   const apiKey = process.env.NASA_API_KEY;
   const today = isoDate(new Date());
@@ -157,6 +205,7 @@ module.exports = async (req, res) => {
       geomagneticIntensity: Math.min(kpIndex / 9, 1),
       kpIndex,
     },
+    cmes: recentCMEs(cmes),
     asteroids: neo ? normalizeAsteroids(neo) : [],
     apod: apodResult.status === 'fulfilled' ? normalizeAPOD(apodResult.value) : null,
   };
