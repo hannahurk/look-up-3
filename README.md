@@ -40,7 +40,7 @@ Displayed values ease toward the latest fetched numbers rather than snapping, so
 
 ## Camera motion
 
-The sign asks for webcam access on load and uses simple frame differencing on a tiny (32×24) downscaled copy of the feed to detect movement. Frames are compared and discarded in the browser — nothing is recorded or sent anywhere. Movement after about three seconds of stillness counts as a new visitor and advances to the next screen right away (and restarts the 15-second hold); continuous movement doesn't skip screens. Sudden whole-frame brightness changes (lights, auto-exposure) are ignored. If there's no camera or permission is denied, mouse/touch/keyboard activity counts as movement instead, and the 10-second timer still runs. For a kiosk, allow camera access for the site once in the browser's site settings so it never prompts.
+The sign asks for webcam access on load and uses simple frame differencing on a tiny (32×24) downscaled copy of the feed to detect movement. Frames are compared and discarded in the browser — nothing is recorded or sent anywhere. Movement after about three seconds of stillness counts as a new visitor and advances to the next screen right away (and restarts the 15-second hold); continuous movement doesn't skip screens. Sudden whole-frame brightness changes (lights, auto-exposure) are ignored. If there's no camera or permission is denied, mouse/touch/keyboard activity counts as movement instead, and the 15-second timer still runs. For a kiosk, allow camera access for the site once in the browser's site settings so it never prompts.
 
 ## If NASA is unreachable
 
