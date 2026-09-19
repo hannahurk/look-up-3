@@ -833,44 +833,34 @@
     requestAnimationFrame(frame);
   }
 
-  // ---------- idle / wake cycle ----------
+  // ---------- slide cycle ----------
   //
-  // The sign wakes on motion. A webcam (see startCameraMotion) is the real
-  // trigger for the install; mouse/touch/keyboard activity stays as a
-  // fallback for desks and testing. Each time the sign wakes from idle it
-  // cycles to the next screen: APOD photo → Cosmic Meteorology → Space Weather
-  // Forecast → EPIC Earth image → Artwork key → Algorithm Art → back to APOD. Camera motion after a quiet gap
-  // counts as a new visitor and advances the screen even if the sign hasn't
-  // gone idle yet.
+  // Each slide holds for SLIDE_DWELL_MS, then the sign moves to the next one:
+  // APOD photo → Cosmic Meteorology → Space Weather Forecast → EPIC Earth
+  // image → Artwork key → Algorithm Art → back to APOD. Movement cuts in
+  // early: when the camera (see startCameraMotion) sees a new visitor — motion
+  // after a few seconds of stillness — the sign advances right away and the
+  // timer restarts. Continuous movement doesn't skip screens. Mouse/touch/
+  // keyboard activity counts as movement too, for desks and testing.
 
-  const IDLE_TIMEOUT_MS = 8000;
+  const SLIDE_DWELL_MS = 10000; // every slide holds at least this long unless a visitor arrives
   const MODE_ORDER = ['apod', 'wx', 'forecast', 'epic', 'key', 'art'];
-  let idleTimer;
+  let dwellTimer;
   let mode = 'apod';
 
-  function wake(forceAdvance) {
-    const wasIdle = document.body.classList.contains('is-idle');
-    document.body.classList.remove('is-idle');
-    clearTimeout(idleTimer);
-    idleTimer = setTimeout(goIdle, IDLE_TIMEOUT_MS);
-    if (wasIdle || forceAdvance === true) toggleMode();
-  }
-
-  function goIdle() {
-    document.body.classList.add('is-idle');
-  }
-
-  function toggleMode() {
+  function advance() {
     mode = MODE_ORDER[(MODE_ORDER.indexOf(mode) + 1) % MODE_ORDER.length];
     document.body.classList.remove('mode-wx', 'mode-forecast', 'mode-key', 'mode-epic', 'mode-art');
     if (mode !== 'apod') document.body.classList.add('mode-' + mode);
+    clearTimeout(dwellTimer);
+    dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);
   }
 
-  function startIdleCycle() {
+  function startSlideCycle() {
     ['mousemove', 'touchstart', 'touchmove', 'keydown', 'click', 'scroll'].forEach((evt) => {
-      window.addEventListener(evt, () => wake(), { passive: true });
+      window.addEventListener(evt, onMotion, { passive: true });
     });
-    idleTimer = setTimeout(goIdle, IDLE_TIMEOUT_MS);
+    dwellTimer = setTimeout(advance, SLIDE_DWELL_MS);
   }
 
   // ---------- camera motion ----------
@@ -878,7 +868,7 @@
   // Frame differencing on a tiny downscaled copy of the webcam feed. Frames
   // are compared and thrown away in the browser — nothing is recorded or sent
   // anywhere. If the camera is missing or permission is denied, the sign just
-  // keeps using the mouse/touch fallback above.
+  // keeps using the mouse/touch fallback above and the timer.
 
   const MOTION_SAMPLE_MS = 120;
   const MOTION_QUIET_MS = 3000; // stillness needed before movement counts as a new visitor
@@ -892,9 +882,9 @@
 
   function onMotion() {
     const now = performance.now();
-    const isNewEvent = now - lastMotionAt > MOTION_QUIET_MS;
+    const isNewVisitor = now - lastMotionAt > MOTION_QUIET_MS;
     lastMotionAt = now;
-    wake(isNewEvent);
+    if (isNewVisitor) advance();
   }
 
   async function startCameraMotion() {
@@ -959,7 +949,7 @@
   setInterval(loadSolarWind, WIND_REFRESH_MS);
   setInterval(loadForecast, FORECAST_REFRESH_MS);
   setInterval(fetchData, REFRESH_MS);
-  startIdleCycle();
+  startSlideCycle();
   startCameraMotion();
 
   requestAnimationFrame(frame);
