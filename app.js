@@ -3,8 +3,7 @@
 // canvas reading of the same live data ("Algorithm Art").
 //
 // /api/nasa-data (a serverless proxy holding the real NASA key) supplies
-// APOD, space weather, and near-Earth objects; /api/cosmic-report supplies
-// the written space-weather forecast. EPIC and NOAA solar wind
+// APOD, space weather, and near-Earth objects. EPIC and NOAA solar wind
 // need no key, so this file fetches those two directly. This file never
 // sees or requests a NASA key itself.
 
@@ -162,6 +161,7 @@
       const [speed] = await speedRes.json();
       renderSolarWind(mag, speed);
     } catch (err) {
+      document.getElementById('wx-card').classList.add('has-error');
       document.getElementById('wind-speed').textContent = '—';
       document.getElementById('wind-bz').textContent = '—';
       console.error('Solar wind fetch failed:', err);
@@ -170,6 +170,7 @@
 
   function renderSolarWind(mag, speed) {
     const card = document.getElementById('wx-card');
+    card.classList.remove('has-error');
 
     const mph = Math.round(speed.proton_speed * KM_S_TO_MPH);
     document.getElementById('wind-speed').textContent = mph.toLocaleString('en-US');
@@ -181,70 +182,23 @@
     document.getElementById('aurora-badge').hidden = !isSouth;
   }
 
-  // ---------- Cosmic Meteorology forecast ----------
-  //
-  // /api/cosmic-report returns a TV-style forecast written from the week's
-  // NASA DONKI events. If that isn't available (no key, NASA down, model
-  // hiccup) we fall back to a one-line summary built from /api/nasa-data.
-
-  const REPORT_REFRESH_MS = 30 * 60 * 1000;
-  let reportText = null;
-  let fallbackLine = 'Checking conditions\u2026';
+  // ---------- Cosmic Meteorology summary (from /api/nasa-data) ----------
 
   function renderSpaceWeatherSummary(spaceWeather) {
+    const card = document.getElementById('wx-card');
+    card.classList.remove('has-error');
+
+    let text;
     if (spaceWeather.kpIndex >= 5) {
-      fallbackLine = `Geomagnetic storm conditions \u2014 Kp ${spaceWeather.kpIndex}.`;
+      text = `Geomagnetic storm conditions — Kp ${spaceWeather.kpIndex}`;
     } else if (spaceWeather.flareCount > 0) {
-      fallbackLine = `${spaceWeather.flareCount} solar flare${spaceWeather.flareCount === 1 ? '' : 's'} this week.`;
+      text = `${spaceWeather.flareCount} solar flare${spaceWeather.flareCount === 1 ? '' : 's'} this week`;
     } else if (spaceWeather.cmeCount > 0) {
-      fallbackLine = `${spaceWeather.cmeCount} coronal mass ejection${spaceWeather.cmeCount === 1 ? '' : 's'} this week.`;
+      text = `${spaceWeather.cmeCount} coronal mass ejection${spaceWeather.cmeCount === 1 ? '' : 's'} this week`;
     } else {
-      fallbackLine = 'All quiet \u2014 no notable activity this week.';
+      text = 'All quiet — no notable activity this week.';
     }
-    paintForecast();
-  }
-
-  function paintForecast() {
-    let paragraphs;
-    if (reportText) {
-      paragraphs = reportText
-        .split(/\n\s*\n/)
-        .map((t) => t.trim())
-        .filter((t) => t && !/^cosmic meteorology$/i.test(t) && !/^here is tonight/i.test(t));
-    } else {
-      paragraphs = [fallbackLine];
-    }
-
-    const box = document.getElementById('wx-report');
-    box.textContent = '';
-    paragraphs.forEach((text, i) => {
-      const p = document.createElement('p');
-      p.className = 'wx-para';
-      p.style.setProperty('--i', i);
-      const outlook = text.match(/^(cosmic outlook:)\s*([\s\S]*)$/i);
-      if (outlook) {
-        p.classList.add('wx-outlook');
-        const label = document.createElement('span');
-        label.className = 'wx-outlook-label';
-        label.textContent = outlook[1];
-        p.append(label, ' ' + outlook[2]);
-      } else {
-        p.textContent = text;
-      }
-      box.appendChild(p);
-    });
-  }
-
-  async function loadCosmicReport() {
-    try {
-      const res = await fetch('/api/cosmic-report');
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      reportText = typeof data.report === 'string' && data.report ? data.report : null;
-      paintForecast();
-    } catch (err) {
-      console.error('cosmic report fetch failed:', err);
-    }
+    document.getElementById('wx-alert').textContent = text;
   }
 
   // ---------- unified NASA data (APOD, space weather, NEO) ----------
@@ -717,8 +671,6 @@
   loadEPIC();
   loadSolarWind();
   fetchData();
-  loadCosmicReport();
-  setInterval(loadCosmicReport, REPORT_REFRESH_MS);
   setInterval(loadEPIC, REFRESH_MS);
   setInterval(loadSolarWind, WIND_REFRESH_MS);
   setInterval(fetchData, REFRESH_MS);

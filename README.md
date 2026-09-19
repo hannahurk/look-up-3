@@ -19,15 +19,9 @@ Two more sources don't need a key at all, so `app.js` fetches them directly: [NA
 Each time the sign wakes from idle (not on every twitch while already awake), or a camera detects a new visitor after a few seconds of stillness, it advances: **APOD photo → Cosmic Meteorology → EPIC Earth image → Algorithm Art → back to APOD.**
 
 - **APOD** — full-bleed image or video, whichever NASA published today.
-- **Cosmic Meteorology** — a written, TV-weather-style space forecast: paragraphs fade in one at a time like a teleprompter and end with a highlighted "Cosmic outlook." Underneath, a small ticker shows live NOAA solar wind speed and Bz (updated every minute) and an aurora-watch badge when the field turns southward. See below for how the forecast is written.
+- **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
 - **Algorithm Art** — see below.
-
-## How the forecast is written (Cosmic Meteorology)
-
-`api/cosmic-report.js` pulls the past week of NASA DONKI events — solar flares, coronal mass ejections (with any predicted Earth-arrival time), geomagnetic storms, and interplanetary shocks — turns them into a plain-text digest, and asks an OpenAI model to write the forecast under a strict weather-reporter persona (defined in that file): every claim must come from the digest, events that already happened are kept separate from ones predicted to reach Earth, and a quiet week is reported as quiet. The result is cached for 30 minutes.
-
-If the OpenAI key isn't set, NASA can't be reached, or the model's answer doesn't match the expected format, the function returns no report and the screen shows a one-line summary instead. It never reports "quiet" when it simply couldn't get the data.
 
 ## How the data reads as motion (Algorithm Art)
 
@@ -56,12 +50,9 @@ Every screen keeps running on whatever it last had (or a quiet neutral default o
 - `style.css` — full-viewport layout, the weather "stat screen" style, the canvas/grain styling, and the mode-switching + idle/wake transitions
 - `app.js` — fetches and renders APOD, EPIC, solar wind, and Cosmic Meteorology; runs the Algorithm Art generative engine; and drives the four-way idle/wake cycle
 - `api/nasa-data.js` — the Vercel serverless function that fetches and normalizes APOD, NEO, and DONKI data
-- `api/cosmic-report.js` — the Vercel serverless function that writes the Cosmic Meteorology forecast from DONKI events
 
 No React, TypeScript, build tooling, or npm packages — plain HTML/CSS/JS, deployed as-is.
 
 ## Setup
 
-Set `NASA_API_KEY` in the Vercel project's environment variables (Project Settings → Environment Variables) to your own key from [api.nasa.gov](https://api.nasa.gov). It's read only inside the `api/` functions; nothing in the repo needs to contain it.
-
-For the written forecast, also set `OPENAI_API_KEY` (from platform.openai.com → API keys; the account needs billing credit). Optionally set `COSMIC_REPORT_MODEL` to use a model other than the default `gpt-5.6-luna` (it's called through OpenAI's Responses API). Without the key everything still works — the weather screen just shows the one-line summary.
+Set `NASA_API_KEY` in the Vercel project's environment variables (Project Settings → Environment Variables) to your own key from [api.nasa.gov](https://api.nasa.gov). It's read only inside `api/nasa-data.js`; nothing in the repo needs to contain it.
