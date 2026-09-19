@@ -37,7 +37,9 @@ Each slide holds for 15 seconds, then the sign moves on to the next — and a ca
   - Miss distance → orbital radius
 - **Potentially hazardous asteroids**, and generally elevated conditions (an X-class flare or Kp ≥ 5), bring in a restrained amber tint — never a saturated warning color.
 
-Contrast: every meaningful mark keeps at least 3:1 contrast against the background at its blended strength (WCAG 1.4.11) — the orbit lines, core, aurora, arcs and streaks hold their strength for most of their travel and only fade at the very end. The twinkling background stars and soft halos are decorative. Nothing flashes, and `prefers-reduced-motion` slows the motion to a crawl.
+Motion is deliberately gentle so the piece is comfortable to look up at for a long time: the orbiting dots drift (one lap every one to five minutes), shooting stars and wind streaks move slowly with only a handful on screen at once, CME arcs take 30–90 seconds to cross, and the twinkle and aurora sway are slow and soft. Nothing flashes, and everything slows further under `prefers-reduced-motion`.
+
+Contrast: every meaningful mark keeps at least 3:1 contrast against the background at its blended strength (WCAG 1.4.11) — the orbit lines, core, aurora, arcs and streaks hold their strength for most of their travel and only fade at the very end. The twinkling background stars and soft halos are decorative.
 
 Displayed values ease toward the latest fetched numbers rather than snapping, so a data refresh never looks abrupt. The canvas keeps running continuously in the background even while a different screen is showing, so Algorithm Art is always mid-motion when the cycle reaches it.
 

@@ -431,7 +431,8 @@
         ? logMapRange(a.missDistance, Math.max(minMiss, 1), Math.max(maxMiss, minMiss + 1), minRadius, maxRadius)
         : lerp(minRadius, maxRadius, rand());
       const bodyRadius = a.diameter > 0 ? logMapRange(a.diameter, 5, 2000, 4, 11) * ui : 6 * ui;
-      const angularSpeed = a.velocity > 0 ? mapRange(a.velocity, 3000, 120000, 0.05, 0.32) : 0.1;
+      // Radians per second: one lap every ~1-5 minutes, slow enough to read as drifting.
+      const angularSpeed = a.velocity > 0 ? mapRange(a.velocity, 3000, 120000, 0.02, 0.1) : 0.05;
 
       return {
         radius,
@@ -453,12 +454,12 @@
     const angle = Math.PI * 0.15 + (Math.random() - 0.5) * 0.4;
     const fromLeft = Math.random() < 0.5;
     return {
-      x: fromLeft ? -20 - Math.random() * width * 0.3 : Math.random() * width,
-      y: fromLeft ? Math.random() * height * 0.6 : -20 - Math.random() * height * 0.3,
+      x: fromLeft ? -20 * ui : Math.random() * width,
+      y: fromLeft ? Math.random() * height * 0.6 : -20 * ui,
       angle,
       sizeFactor: 0.75 + Math.random() * 0.5,
       life: 0,
-      maxLife: 45 + Math.random() * 35,
+      maxLife: 260 + Math.random() * 160, // frames; slow streaks need time to cross
     };
   }
 
@@ -471,7 +472,7 @@
     width = window.innerWidth;
     height = window.innerHeight;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    ui = clamp(Math.min(width, height) / 500, 1.4, 3);
+    ui = clamp(Math.min(width, height) / 750, 1, 2.2);
     canvas.width = width * dpr;
     canvas.height = height * dpr;
     canvas.style.width = width + 'px';
@@ -491,7 +492,7 @@
 
   function drawStars(t) {
     for (const s of stars) {
-      const twinkle = 0.7 + 0.3 * Math.sin(t * s.speed + s.phase);
+      const twinkle = 0.8 + 0.2 * Math.sin(t * s.speed + s.phase);
       ctx.beginPath();
       ctx.fillStyle = rgba(palette.star, s.base * twinkle);
       ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
@@ -502,7 +503,7 @@
   function drawCore(t, center, elevated) {
     const intensity = shown.flareIntensity;
     const normalized = clamp(logMapRange(intensity, 1, 10000, 0, 1), 0, 1);
-    const radius = mapRange(normalized, 0, 1, Math.min(width, height) * 0.06, Math.min(width, height) * 0.11);
+    const radius = mapRange(normalized, 0, 1, Math.min(width, height) * 0.045, Math.min(width, height) * 0.08);
     const brightness = mapRange(normalized, 0, 1, 0.6, 0.85);
     const breathe = 1 + Math.sin(t * 0.12) * 0.04;
 
@@ -553,7 +554,7 @@
 
   function drawBodies(dt, center, elevated) {
     for (const orbit of orbits) {
-      orbit.angle += orbit.angularSpeed * dt * (reduceMotion ? 0.15 : 1);
+      orbit.angle += orbit.angularSpeed * (dt / 60) * (reduceMotion ? 0.15 : 1); // dt is in 60fps frames
       const pos = orbitPosition(orbit, center);
       const color = orbit.hazardous ? mix(palette.amber, palette.core, elevated ? 0.25 : 0.5) : palette.core;
       const alpha = orbit.hazardous ? 0.85 : 0.75;
@@ -625,14 +626,14 @@
     const startR = Math.min(width, height) * 0.06;
     const endR = Math.hypot(Math.max(center.x, width - center.x), Math.max(center.y, height - center.y));
     const span = endR - startR;
-    const target = Math.round(clamp((width * height) / 14000, 40, 140));
+    const target = Math.round(clamp((width * height) / 36000, 16, 48));
 
     while (windParticles.length < target) {
-      windParticles.push({ angle: Math.random() * Math.PI * 2, t: Math.random(), size: 1.1 + Math.random() * 1.1 });
+      windParticles.push({ angle: Math.random() * Math.PI * 2, t: Math.random(), size: 1.6 + Math.random() * 1.0 });
     }
     windParticles.length = target;
 
-    const speed = mapRange(shown.windKms, 250, 900, 0.5, 3.2) * ui * (reduceMotion ? 0.15 : 1);
+    const speed = mapRange(shown.windKms, 250, 900, 0.18, 1.1) * ui * (reduceMotion ? 0.15 : 1);
     const color = mix(palette.core, palette.star, 0.6);
     const trail = (14 + speed * 8) * ui;
 
@@ -682,7 +683,7 @@
 
     ctx.lineCap = 'round';
     for (const ring of cmeRings) {
-      const period = mapRange(ring.kms, 300, 2000, 1700, 500); // frames to cross the screen
+      const period = mapRange(ring.kms, 300, 2000, 5400, 1800); // frames to cross the screen (~30-90 s)
       ring.t += (dt / period) * (reduceMotion ? 0.15 : 1);
       if (ring.t >= 1) ring.t -= 1;
 
@@ -738,9 +739,9 @@
 
   function drawParticles(elevated) {
     const geo = shown.geomagneticIntensity;
-    const speed = mapRange(geo, 0, 1, 1.4, 5.5) * ui;
+    const speed = mapRange(geo, 0, 1, 0.6, 2.2) * ui * (reduceMotion ? 0.3 : 1);
 
-    const targetFine = Math.round(clamp(shown.eventDensity || 0, 4, 16));
+    const targetFine = Math.round(clamp((shown.eventDensity || 0) * 0.5, 3, 8));
     while (fineParticles.length < targetFine) fineParticles.push(makeFineParticle());
     while (fineParticles.length > targetFine) fineParticles.pop();
 
@@ -779,14 +780,14 @@
     const center = coreCenter();
 
     drawBackdrop();
-    drawStars(clock * 40);
-    drawAurora(clock);
+    drawStars(clock * 8);
+    drawAurora(clock * 0.4);
     drawWind(dt, center);
     drawCMEs(dt, center);
     drawParticles(elevated);
-    drawCore(clock * 40, center, elevated);
+    drawCore(clock * 8, center, elevated);
     drawOrbits(center, elevated);
-    drawBodies(reduceMotion ? dt * 0.15 : dt, center, elevated);
+    drawBodies(dt, center, elevated);
 
     requestAnimationFrame(frame);
   }
