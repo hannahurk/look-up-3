@@ -176,8 +176,6 @@
     document.getElementById('wind-speed').textContent = mph.toLocaleString('en-US');
 
     const bz = mag.bz_gsm;
-    latestWind = { kms: Number(speed.proton_speed), mph, bz: Number(bz) };
-    paintForecast();
     document.getElementById('wind-bz').textContent = (bz > 0 ? '+' : '') + bz;
     const isSouth = bz < -2; // southward field: more likely to spark aurora
     card.classList.toggle('is-south', isSouth);
@@ -203,44 +201,27 @@
     document.getElementById('wx-alert').textContent = text;
   }
 
-  // ---------- Space Weather Forecast (NOAA SWPC + NASA DONKI) ----------
+  // ---------- Space Weather Forecast (NOAA SWPC) ----------
   //
   // NOAA publishes an official 3-day forecast on its space weather scales
-  // (G = geomagnetic storms, R = radio blackouts, S = radiation storms). We
-  // show those as day cards and write a short TV-style script around them.
-  // Every sentence is a fixed template filled with live numbers, so nothing
-  // is invented — a sentence is simply left out when its data is missing.
+  // (G = geomagnetic storms, R = radio blackouts, S = radiation storms). The
+  // slide shows those as three day cards; forecastHeadline also feeds the
+  // artwork key slide.
 
   const SCALES_URL = 'https://services.swpc.noaa.gov/products/noaa-scales.json';
-  const KP_URL = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json';
   const FORECAST_REFRESH_MS = 30 * 60 * 1000;
-  const KP_MAX_AGE_MS = 12 * 60 * 60 * 1000;
   const G_NAMES = ['Calm', 'Minor storm', 'Moderate storm', 'Strong storm', 'Severe storm', 'Extreme storm'];
 
   let noaaScales = null; // NOAA's 3-day scales forecast
-  let latestKp = null; // { kp, time } — most recent observed planetary Kp
-  let latestWind = null; // { kms, mph, bz } — from NOAA real-time solar wind
-
-  async function getJSON(url) {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return res.json();
-  }
 
   async function loadForecast() {
-    const [scalesResult, kpResult] = await Promise.allSettled([getJSON(SCALES_URL), getJSON(KP_URL)]);
-
-    if (scalesResult.status === 'fulfilled') noaaScales = scalesResult.value;
-    else console.error('NOAA scales fetch failed:', scalesResult.reason);
-
-    if (kpResult.status === 'fulfilled' && Array.isArray(kpResult.value)) {
-      const seen = kpResult.value.filter((row) => row && row.observed !== 'predicted' && Number.isFinite(Number(row.kp)));
-      const last = seen[seen.length - 1];
-      latestKp = last ? { kp: Number(last.kp), time: new Date(last.time_tag + 'Z').getTime() } : null;
-    } else if (kpResult.status === 'rejected') {
-      console.error('NOAA Kp fetch failed:', kpResult.reason);
+    try {
+      const res = await fetch(SCALES_URL);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      noaaScales = await res.json();
+    } catch (err) {
+      console.error('NOAA scales fetch failed:', err);
     }
-
     paintForecast();
   }
 
@@ -263,11 +244,11 @@
       }));
   }
 
-  function dayName(dateStamp, long) {
+  function dayName(dateStamp) {
     return new Date(dateStamp + 'T00:00:00Z').toLocaleDateString('en-US', {
-      weekday: long ? 'long' : 'short',
-      month: long ? undefined : 'short',
-      day: long ? undefined : 'numeric',
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
       timeZone: 'UTC',
     });
   }
@@ -283,12 +264,6 @@
     return 'Calm skies ahead';
   }
 
-  function auroraNote(g) {
-    if (g >= 3) return 'aurora may reach well into the mid-latitudes';
-    if (g === 2) return 'aurora may dip into the northern United States';
-    return 'aurora may appear at high latitudes';
-  }
-
   function strongestFlareClass(intensity) {
     if (!(intensity > 0)) return null;
     const classes = [['X', 10000], ['M', 1000], ['C', 100], ['B', 10], ['A', 1]];
@@ -302,134 +277,51 @@
     return `${n} ${n === 1 ? one : many}`;
   }
 
-  function forecastParagraphs(days) {
-    const paras = [];
-
-    // Right now: NOAA real-time solar wind + latest Kp
-    const now = [];
-    if (latestWind && Number.isFinite(latestWind.kms)) {
-      const pace = latestWind.kms < 350 ? 'gentle' : latestWind.kms < 500 ? 'steady' : latestWind.kms < 700 ? 'brisk' : 'fast';
-      now.push(`Right now, solar winds are running ${pace}, at ${latestWind.mph.toLocaleString('en-US')} mph.`);
-      if (Number.isFinite(latestWind.bz)) {
-        now.push(
-          latestWind.bz <= -2
-            ? 'Their magnetic field is pointing south, which can let energy in and stir up the aurora.'
-            : 'Their magnetic field is not tilted south enough to stir up the aurora.'
-        );
-      }
-    }
-    if (latestKp && Date.now() - latestKp.time < KP_MAX_AGE_MS) {
-      now.push(`The Kp index, a zero-to-nine gauge of geomagnetic turbulence, reads ${latestKp.kp.toFixed(1)}.`);
-    }
-    if (now.length) paras.push(now.join(' '));
-
-    // Next three days: NOAA's forecast
-    if (days.length) {
-      const next = [];
-      const stormDay = days.find((d) => d.g >= 1);
-      if (stormDay) {
-        next.push(
-          `A ${G_NAMES[stormDay.g].toLowerCase()} (G${stormDay.g}) is forecast for ${dayName(stormDay.date, true)}, when ${auroraNote(stormDay.g)}.`
-        );
-      } else {
-        next.push(`No geomagnetic storms are forecast through ${dayName(days[days.length - 1].date, true)}.`);
-      }
-      const radio = Math.max(0, ...days.map((d) => d.rMinor || 0));
-      const radiation = Math.max(0, ...days.map((d) => d.s || 0));
-      if (radio >= 10 || radiation >= 10) {
-        next.push(`Flare-driven radio blackouts carry a chance of up to ${radio}% and solar radiation storms up to ${radiation}% on any given day.`);
-      } else {
-        next.push(`Chances of a flare-driven radio blackout or a solar radiation storm stay low, at ${Math.max(radio, radiation)}% or less per day.`);
-      }
-      paras.push(next.join(' '));
-    }
-
-    // Past week: NASA DONKI
-    const sw = latestData && latestData.spaceWeather;
-    const status = (latestData && latestData.sourceStatus) || {};
-    if (sw && status.flares === 'live' && status.cmes === 'live') {
-      if (sw.flareCount === 0 && sw.cmeCount === 0) {
-        paras.push('The Sun produced no solar flares or coronal mass ejections over the past week.');
-      } else {
-        const strongest = strongestFlareClass(sw.flareIntensity);
-        let text = `Over the past week, the Sun produced ${plural(sw.flareCount, 'solar flare', 'solar flares')}`;
-        if (strongest && sw.flareCount > 0) text += ` (the strongest ${/^[AMX]/.test(strongest) ? 'an' : 'a'} ${strongest})`;
-        text += ` and ${plural(sw.cmeCount, 'coronal mass ejection', 'coronal mass ejections')}, which are huge clouds of charged particles.`;
-        if (status.storms === 'live' && sw.kpIndex >= 5) text += ` A geomagnetic storm peaked at Kp ${sw.kpIndex}.`;
-        paras.push(text);
-      }
-    }
-    return paras;
-  }
-
   function paintForecast() {
     const days = forecastDays();
-    const headline = document.getElementById('fc-headline');
     const daysEl = document.getElementById('fc-days');
-    const reportEl = document.getElementById('fc-report');
-    if (!headline || !daysEl || !reportEl) return;
+    if (daysEl) {
+      daysEl.textContent = '';
+      if (days.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'fc-empty';
+        empty.textContent = 'Forecast unavailable right now';
+        daysEl.appendChild(empty);
+      }
+      days.forEach((d, i) => {
+        const card = document.createElement('div');
+        card.className = 'fc-day';
+        card.dataset.g = String(Math.min(d.g, 5));
+        card.style.setProperty('--i', i);
 
-    headline.textContent = forecastHeadline(days);
-    headline.style.setProperty('--i', 0);
+        const date = document.createElement('div');
+        date.className = 'fc-date';
+        date.textContent = dayName(d.date);
 
-    daysEl.textContent = '';
-    days.forEach((d, i) => {
-      const card = document.createElement('div');
-      card.className = 'fc-day';
-      card.dataset.g = String(Math.min(d.g, 5));
-      card.style.setProperty('--i', i + 1);
+        const cond = document.createElement('div');
+        cond.className = 'fc-cond';
+        const dot = document.createElement('span');
+        dot.className = 'fc-dot';
+        dot.setAttribute('aria-hidden', 'true');
+        cond.append(dot, G_NAMES[Math.min(d.g, 5)]);
 
-      const date = document.createElement('div');
-      date.className = 'fc-date';
-      date.textContent = dayName(d.date, false);
-
-      const cond = document.createElement('div');
-      cond.className = 'fc-cond';
-      const dot = document.createElement('span');
-      dot.className = 'fc-dot';
-      dot.setAttribute('aria-hidden', 'true');
-      cond.append(dot, G_NAMES[Math.min(d.g, 5)]);
-
-      card.append(date, cond);
-      [
-        ['Radio blackout', d.rMinor],
-        ['Radiation storm', d.s],
-      ].forEach(([label, value]) => {
-        if (value === null) return;
-        const row = document.createElement('div');
-        row.className = 'fc-row';
-        const name = document.createElement('span');
-        name.textContent = label + ' chance';
-        const pct = document.createElement('b');
-        pct.textContent = value + '%';
-        row.append(name, pct);
-        card.appendChild(row);
+        card.append(date, cond);
+        [
+          ['Radio blackout', d.rMinor],
+          ['Radiation storm', d.s],
+        ].forEach(([label, value]) => {
+          if (value === null) return;
+          const row = document.createElement('div');
+          row.className = 'fc-row';
+          const name = document.createElement('span');
+          name.textContent = label + ' chance';
+          const pct = document.createElement('b');
+          pct.textContent = value + '%';
+          row.append(name, pct);
+          card.appendChild(row);
+        });
+        daysEl.appendChild(card);
       });
-      daysEl.appendChild(card);
-    });
-
-    reportEl.textContent = '';
-    const paras = forecastParagraphs(days);
-    const outlook = days.length
-      ? Math.max(...days.map((d) => d.g)) >= 1
-        ? `Keep an eye on the sky around ${dayName((days.find((d) => d.g >= 1)).date, true)}.`
-        : `Calm geomagnetic skies through ${dayName(days[days.length - 1].date, true)}.`
-      : null;
-
-    paras.forEach((text, i) => {
-      const p = document.createElement('p');
-      p.style.setProperty('--i', days.length + 1 + i);
-      p.textContent = text;
-      reportEl.appendChild(p);
-    });
-    if (outlook) {
-      const p = document.createElement('p');
-      p.className = 'fc-outlook';
-      p.style.setProperty('--i', days.length + 1 + paras.length);
-      const label = document.createElement('b');
-      label.textContent = 'Outlook:';
-      p.append(label, ' ' + outlook);
-      reportEl.appendChild(p);
     }
     paintArtKey();
   }

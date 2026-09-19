@@ -149,12 +149,14 @@ body.mode-art #art {
 
 .stat-label {
   display: block;
+  margin: 0 0 clamp(16px, 3vh, 36px);
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  letter-spacing: 0.03em;
-  font-size: 13px;
-  color: var(--amber);
+  font-size: clamp(24px, min(4vw, 7vh), 64px);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  color: var(--amber);
 }
 
 .stat-metric {
@@ -219,8 +221,8 @@ body.mode-art #art {
 }
 
 /* ---- Space Weather Forecast ----
-   A TV-weather-style screen: a headline, three day cards, then a short
-   script written from live NOAA + NASA numbers. */
+   Just the heading and three day cards. The heading is the shared orange
+   all-caps H1 (.stat-label). */
 
 .forecast-screen { padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 48px); }
 
@@ -230,6 +232,7 @@ body.mode-art #art {
   color: var(--paper);
 }
 
+/* Sub-headline on the artwork key slide. */
 .fc-headline {
   margin: 0 0 clamp(14px, 2.4vh, 28px);
   font-size: clamp(28px, min(5vw, 8vh), 72px);
@@ -240,12 +243,18 @@ body.mode-art #art {
 .fc-days {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(10px, 1.6vw, 22px);
-  margin-bottom: clamp(14px, 2.6vh, 30px);
+  gap: clamp(10px, 1.6vw, 24px);
+}
+
+.fc-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: clamp(18px, 2.4vw, 36px);
+  color: var(--slate);
 }
 
 .fc-day {
-  padding: clamp(12px, 2vh, 22px);
+  padding: clamp(14px, 2.6vh, 32px);
   border: 1px solid rgba(154, 161, 180, 0.4);
   border-radius: 14px;
   background: rgba(27, 30, 42, 0.7);
@@ -253,7 +262,7 @@ body.mode-art #art {
 
 .fc-date {
   font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: clamp(11px, 1.2vw, 18px);
+  font-size: clamp(12px, min(1.7vw, 3vh), 26px);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--slate);
@@ -263,8 +272,8 @@ body.mode-art #art {
   display: flex;
   align-items: center;
   gap: 0.5em;
-  margin: 0.45em 0 0.6em;
-  font-size: clamp(20px, min(2.8vw, 4.6vh), 40px);
+  margin: 0.5em 0 0.7em;
+  font-size: clamp(22px, min(3.6vw, 6.4vh), 60px);
   font-weight: 700;
   line-height: 1.1;
 }
@@ -289,46 +298,15 @@ body.mode-art #art {
   display: flex;
   justify-content: space-between;
   gap: 0.6em;
-  font-size: clamp(12px, min(1.4vw, 2.3vh), 20px);
-  line-height: 1.5;
+  font-size: clamp(13px, min(1.55vw, 3vh), 26px);
+  line-height: 1.55;
   color: #d6d9e2;
 }
 
 .fc-row b { color: var(--paper); font-weight: 600; }
 
-.fc-report {
-  font-size: clamp(15px, min(1.75vw, 2.7vh), 26px);
-  line-height: 1.5;
-}
-
-.fc-report p { margin: 0 0 0.7em; color: #e3e6ee; }
-
-.fc-outlook {
-  padding-top: 0.6em;
-  border-top: 2px solid rgba(242, 169, 59, 0.5);
-  font-weight: 600;
-}
-
-.fc-outlook b {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 0.8em;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--amber);
-}
-
-.fc-source {
-  margin: 0.4em 0 0;
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: clamp(10px, 1vw, 14px);
-  letter-spacing: 0.04em;
-  color: var(--slate);
-}
-
-/* Cards and paragraphs come in one after another each time the screen appears. */
-body.mode-forecast .fc-headline,
-body.mode-forecast .fc-day,
-body.mode-forecast .fc-report p {
+/* Cards come in one after another each time the screen appears. */
+body.mode-forecast .fc-day {
   animation: fc-in 0.8s ease backwards;
   animation-delay: calc(var(--i, 0) * 0.5s);
 }
@@ -338,9 +316,7 @@ body.mode-forecast .fc-report p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body.mode-forecast .fc-headline,
-  body.mode-forecast .fc-day,
-  body.mode-forecast .fc-report p { animation: none; }
+  body.mode-forecast .fc-day { animation: none; }
 }
 
 @media (max-width: 560px) {

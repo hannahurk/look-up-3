@@ -20,7 +20,7 @@ Each slide holds for 15 seconds, then the sign moves on to the next — and a ca
 
 - **APOD** — full-bleed image or video, whichever NASA published today.
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
-- **Space Weather Forecast** — a TV-weather-style report. NOAA's official three-day forecast becomes three day cards (calm to storm, plus the chance of radio blackouts and radiation storms), followed by a short script: what the solar wind and Kp index are doing right now, what's forecast, and a recap of the past week from NASA DONKI. Every sentence is a fixed template filled with live numbers and is simply left out if its data is missing, so nothing is invented.
+- **Space Weather Forecast** — an orange all-caps heading over three day cards built from NOAA's official three-day forecast: a color-coded level from Calm to Extreme storm, plus the chance of a radio blackout and of a radiation storm.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
 - **Artwork key ("Today's sky, translated")** — shown just before the art, in the same plain weather-report voice: what the shooting stars, glowing core and orbiting dots mean right now, with the live numbers behind each (Kp, flare and CME counts, strongest flare, asteroids today) and NOAA's forecast headline. A line is skipped if its data source isn't live.
 - **Algorithm Art** — see below.
