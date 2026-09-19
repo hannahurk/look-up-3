@@ -821,7 +821,9 @@
 
   const SLIDE_DWELL_MIN_MS = 12000; // every slide holds 12-15 s unless a visitor arrives
   const SLIDE_DWELL_MAX_MS = 15000;
-  const nextDwell = () => SLIDE_DWELL_MIN_MS + Math.random() * (SLIDE_DWELL_MAX_MS - SLIDE_DWELL_MIN_MS);
+  // The artwork always gets the full 15 s; every other slide is a random 12-15 s.
+  const nextDwell = () =>
+    mode === 'art' ? SLIDE_DWELL_MAX_MS : SLIDE_DWELL_MIN_MS + Math.random() * (SLIDE_DWELL_MAX_MS - SLIDE_DWELL_MIN_MS);
   let dwellTimer;
   let mode = 'apod';
 
