@@ -234,7 +234,7 @@
       const pace = wind.kms < 350 ? 'Gentle' : wind.kms < 500 ? 'Steady' : wind.kms < 700 ? 'Brisk' : 'Fast';
       cards.push({
         label: 'Solar wind', glyph: 'wind',
-        value: `${wind.mph.toLocaleString('en-US')} Miles per Hour`,
+        value: `${wind.mph.toLocaleString('en-US')} Miles Per Hour`,
         rows: [['Streaming pace', pace]],
       });
     }
