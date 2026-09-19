@@ -807,13 +807,13 @@
     const target = Math.round(clamp((width * height) / 14000, 40, 140));
 
     while (windParticles.length < target) {
-      windParticles.push({ angle: Math.random() * Math.PI * 2, t: Math.random(), size: 0.8 + Math.random() * 1.2 });
+      windParticles.push({ angle: Math.random() * Math.PI * 2, t: Math.random(), size: 1.1 + Math.random() * 1.1 });
     }
     windParticles.length = target;
 
     const speed = mapRange(shown.windKms, 250, 900, 0.5, 3.2) * ui * (reduceMotion ? 0.15 : 1);
-    const color = mix(palette.core, palette.star, 0.35);
-    const trail = speed * 5;
+    const color = mix(palette.core, palette.star, 0.6);
+    const trail = (14 + speed * 8) * ui;
 
     ctx.lineCap = 'round';
     for (const p of windParticles) {
@@ -822,7 +822,7 @@
         p.t = 0;
         p.angle = Math.random() * Math.PI * 2;
       }
-      const alpha = 0.55 * Math.min(p.t / 0.08, 1) * (1 - Math.max((p.t - 0.7) / 0.3, 0));
+      const alpha = 0.9 * Math.min(p.t / 0.08, 1) * (1 - Math.max((p.t - 0.7) / 0.3, 0));
       if (alpha <= 0) continue;
       const r = startR + p.t * span;
       const dx = Math.cos(p.angle);
