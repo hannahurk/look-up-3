@@ -142,7 +142,7 @@ body.mode-art #art {
 }
 
 .stat-card {
-  max-width: 640px;
+  max-width: 1000px;
   text-align: center;
   color: var(--paper);
 }
@@ -387,6 +387,17 @@ body.mode-art .grain {
   border-radius: 50%;
   background: radial-gradient(circle, #63b3ff 0%, rgba(99, 179, 255, 0.4) 55%, rgba(99, 179, 255, 0) 72%);
 }
+
+.key-glyph.is-wind {
+  width: 0.2em;
+  height: 0.2em;
+  margin-right: 0.7em;
+  border-radius: 50%;
+  background: #a8d1ff;
+  box-shadow: 0.36em 0 0 -0.03em rgba(168, 209, 255, 0.7), 0.7em 0 0 -0.06em rgba(168, 209, 255, 0.4);
+}
+
+.fc-days.is-quad { grid-template-columns: repeat(2, 1fr); }
 
 .key-glyph.is-orbit {
   width: 0.5em;

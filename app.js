@@ -150,6 +150,8 @@
 
   // ---------- Solar wind (NOAA SWPC — near-real-time, no key required) ----------
 
+  let latestWind = null; // { kms, mph } — latest solar wind speed; drives the art and the key slide
+
   async function loadSolarWind() {
     try {
       const [magRes, speedRes] = await Promise.all([
@@ -174,6 +176,8 @@
 
     const mph = Math.round(speed.proton_speed * KM_S_TO_MPH);
     document.getElementById('wind-speed').textContent = mph.toLocaleString('en-US');
+    latestWind = { kms: Number(speed.proton_speed), mph };
+    paintArtKey();
 
     const bz = mag.bz_gsm;
     document.getElementById('wind-bz').textContent = (bz > 0 ? '+' : '') + bz;
@@ -418,6 +422,14 @@
       if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
       cards.push({ label: 'Shooting stars', glyph: 'streak', value, rows });
     }
+    if (latestWind && Number.isFinite(latestWind.kms)) {
+      const pace = latestWind.kms < 350 ? 'Gentle' : latestWind.kms < 500 ? 'Steady' : latestWind.kms < 700 ? 'Brisk' : 'Fast';
+      cards.push({
+        label: 'Solar wind', glyph: 'wind',
+        value: `${latestWind.mph.toLocaleString('en-US')} mph`,
+        rows: [['Streaming pace', pace]],
+      });
+    }
     if (sw && status.flares === 'live') {
       const strongest = strongestFlareClass(sw.flareIntensity);
       cards.push({
@@ -437,6 +449,7 @@
     }
 
     box.textContent = '';
+    box.classList.toggle('is-quad', cards.length === 4);
     if (cards.length === 0) {
       const empty = document.createElement('p');
       empty.className = 'fc-empty';
@@ -497,7 +510,7 @@
   // Smoothed, currently-displayed values feeding the artwork — these ease
   // toward latestData's numbers rather than jumping, so a data refresh
   // never looks abrupt.
-  const shown = { flareIntensity: 0, geomagneticIntensity: 0 };
+  const shown = { flareIntensity: 0, geomagneticIntensity: 0, windKms: 400 };
 
   function isAnyLive(sourceStatus) {
     return Object.values(sourceStatus).some((s) => s === 'live');
@@ -545,6 +558,7 @@
   let stars = [];
   let orbits = [];
   let fineParticles = [];
+  let windParticles = [];
 
   // Verified against the --ink background (rgb(10,11,14)): all of these
   // clear 7.5:1, well past the 3:1 WCAG non-text contrast minimum.
@@ -629,6 +643,7 @@
 
   function rebuildParticles() {
     fineParticles = [];
+    windParticles = [];
   }
 
   function resize() {
@@ -781,6 +796,47 @@
     ctx.fill();
   }
 
+  // Solar wind: faint dots streaming radially outward from the glowing core.
+  // Their speed follows the live solar wind speed (NOAA, ~250-900 km/s), so a
+  // faster wind visibly streams faster. Distinct from the shooting stars,
+  // which are larger streaks driven by geomagnetic activity.
+  function drawWind(dt, center) {
+    const startR = Math.min(width, height) * 0.06;
+    const endR = Math.hypot(Math.max(center.x, width - center.x), Math.max(center.y, height - center.y));
+    const span = endR - startR;
+    const target = Math.round(clamp((width * height) / 14000, 40, 140));
+
+    while (windParticles.length < target) {
+      windParticles.push({ angle: Math.random() * Math.PI * 2, t: Math.random(), size: 0.8 + Math.random() * 1.2 });
+    }
+    windParticles.length = target;
+
+    const speed = mapRange(shown.windKms, 250, 900, 0.5, 3.2) * ui * (reduceMotion ? 0.15 : 1);
+    const color = mix(palette.core, palette.star, 0.35);
+    const trail = speed * 5;
+
+    ctx.lineCap = 'round';
+    for (const p of windParticles) {
+      p.t += (speed * dt) / span;
+      if (p.t >= 1) {
+        p.t = 0;
+        p.angle = Math.random() * Math.PI * 2;
+      }
+      const alpha = 0.55 * Math.min(p.t / 0.08, 1) * (1 - Math.max((p.t - 0.7) / 0.3, 0));
+      if (alpha <= 0) continue;
+      const r = startR + p.t * span;
+      const dx = Math.cos(p.angle);
+      const dy = Math.sin(p.angle);
+      ctx.strokeStyle = rgba(color, alpha);
+      ctx.lineWidth = p.size * ui;
+      ctx.beginPath();
+      ctx.moveTo(center.x + dx * Math.max(r - trail, startR), center.y + dy * Math.max(r - trail, startR));
+      ctx.lineTo(center.x + dx * r, center.y + dy * r);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  }
+
   function drawParticles(elevated) {
     const geo = shown.geomagneticIntensity;
     const speed = mapRange(geo, 0, 1, 1.4, 5.5) * ui;
@@ -810,6 +866,7 @@
 
     shown.flareIntensity = lerp(shown.flareIntensity, latestData.spaceWeather.flareIntensity, 0.01);
     shown.geomagneticIntensity = lerp(shown.geomagneticIntensity, latestData.spaceWeather.geomagneticIntensity, 0.01);
+    if (latestWind) shown.windKms = lerp(shown.windKms, latestWind.kms, 0.01);
     const eventDensityTarget =
       latestData.spaceWeather.flareCount + latestData.spaceWeather.cmeCount + (latestData.spaceWeather.kpIndex > 0 ? 6 : 0);
     shown.eventDensity = lerp(shown.eventDensity || 0, mapRange(eventDensityTarget, 0, 30, 1, 16), 0.01);
@@ -821,6 +878,7 @@
 
     drawBackdrop();
     drawStars(clock * 40);
+    drawWind(dt, center);
     drawParticles(elevated);
     drawCore(clock * 40, center, elevated);
     drawOrbits(center, elevated);

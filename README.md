@@ -22,13 +22,14 @@ Each slide holds for 15 seconds, then the sign moves on to the next — and a ca
 - **Cosmic Meteorology** — NOAA solar wind speed and Bz (live, updated every minute), an aurora-watch badge when the field turns southward, and a one-line summary of the week's flare/CME/storm activity.
 - **Space Weather Forecast** — an orange all-caps heading over three day cards built from NOAA's official three-day forecast: a color-coded level from Calm to Extreme storm, plus the chance of a radio blackout and of a radiation storm. Below them, a row of cards for the most recent coronal mass ejections (from the live DONKI feed): when each erupted, its speed, and whether an Earth impact is predicted, with the estimated arrival time when there is one.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
-- **Artwork key ("Today's sky, translated")** — shown just before the art, in the same card style as the forecast: three cards for the shooting stars, the glowing core and the orbiting dots, each with its live reading (storm peak and solar-event count, strongest flare, asteroids today and how many are potentially hazardous). A card or row is skipped if its data source isn't live.
+- **Artwork key ("Today's sky, translated")** — shown just before the art, in the same card style as the forecast: cards for the shooting stars, the solar wind, the glowing core and the orbiting dots, each with its live reading (storm peak and solar-event count, solar wind speed in mph, strongest flare, asteroids today and how many are potentially hazardous). A card or row is skipped if its data source isn't live.
 - **Algorithm Art** — see below.
 
 ## How the data reads as motion (Algorithm Art)
 
 - **Solar-flare intensity** (peak flare class × magnitude in the window) sets the atmospheric core's brightness and radius.
 - **Geomagnetic intensity** (max Kp / 9) sets the shooting stars' size (tail length, stroke width, head size) and speed — calm conditions read as small, slow streaks; storm conditions read as long, fast, thick ones.
+- **Solar wind speed** (live, in mph on the weather screen) sets how fast faint dots stream outward from the glowing core — a faster wind visibly streams faster.
 - **Number of space-weather events** (flares + CMEs, plus a bump for any storm) sets shooting-star density.
 - **Each tracked asteroid** becomes one orbiting body.
   - Diameter → body size
