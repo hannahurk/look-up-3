@@ -113,17 +113,20 @@ body.mode-art #art {
 
 /* ---- EPIC Earth image backdrop ---- */
 
+/* The whole Earth disc stays visible at any window size or shape: the image
+   scales to fit inside the window (never cropped) and the black around it
+   matches the photo's own black space, so there's no visible edge. */
 .epic-screen {
   overflow: hidden;
-  background: var(--panel);
+  padding: clamp(8px, 2vmin, 32px);
+  background: #000;
 }
 
 .epic-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
-  background: var(--panel);
 }
 
 /* ---- text screens ----
