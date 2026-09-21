@@ -253,7 +253,8 @@ body.mode-art .grain {
    styles (.fc-day, .fc-date, .fc-cond, .fc-row) with a small icon that
    matches the element in the art. */
 
-.key-screen { padding: clamp(16px, 3vh, 40px) clamp(16px, 3vw, 48px); }
+/* 20% of the screen width is left empty on each side of the card. */
+.key-screen { padding: clamp(16px, 3vh, 40px) 20%; }
 
 .key-glyph {
   flex: none;
