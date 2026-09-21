@@ -227,7 +227,7 @@
         rows.push(['Storm peak', sw.kpIndex > 0 ? `${sw.kpIndex} of 9` : 'None']);
       }
       if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
-      cards.push({ label: 'Shooting stars', glyph: 'streak', value, rows });
+      cards.push({ label: 'Geomagnetic Activity', glyph: 'streak', value, rows });
     }
     const wind = currentWind();
     if (wind) {
@@ -821,7 +821,7 @@
   // Each slide holds for 12-15 seconds (random within that range), then the
   // sign moves to the next one:
   // APOD photo → EPIC Earth image → one Cosmic Meteorology slide per card
-  // (shooting stars, solar wind, coronal mass ejections, aurora, solar flare strength,
+  // (geomagnetic activity, solar wind, coronal mass ejections, aurora, solar flare strength,
   // asteroid tracker) → Algorithm Art → back to APOD. A card whose data source
   // isn't live has no slide. Movement cuts in early: when the camera (see startCameraMotion) sees a new visitor — motion
   // after a few seconds of stillness — the sign advances right away and the
