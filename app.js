@@ -238,11 +238,16 @@
     if (sw && status.storms === 'live') {
       const stormCount = Number.isFinite(sw.stormCount) ? sw.stormCount : sw.kpIndex > 0 ? 1 : 0;
       const rows = [['Storms this week', String(stormCount)]];
-      if (eventsLive) rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
+      if (eventsLive) {
+        rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
+        rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
+      }
       cards.push({
         label: 'Geomagnetic Activity', glyph: 'streak',
-        value: stormCount === 0 ? 'No Storms' : `Storm Level ${kpLabel(sw.kpIndex)} of 9`,
+        value: sw.kpIndex > 0 ? `Storm Level ${kpLabel(sw.kpIndex)} of 9` : stormCount > 0 ? 'Storm Logged' : 'No Storms',
         rows,
+        // Why there are shooting stars at all, in one line.
+        note: 'Solar events add shooting stars. Storms make them bigger and faster.',
       });
     }
     const wind = currentWind();
@@ -332,6 +337,13 @@
         row.append(n, v);
         card.appendChild(row);
       });
+
+      if (c.note) {
+        const note = document.createElement('p');
+        note.className = 'fc-note';
+        note.textContent = c.note;
+        card.appendChild(note);
+      }
       box.appendChild(card);
     });
     showKeyCard();
@@ -781,7 +793,7 @@
     const geo = shown.geomagneticIntensity;
     const speed = mapRange(geo, 0, 1, 0.6, 2.2) * ui * (reduceMotion ? 0.3 : 1);
 
-    const targetFine = starCountFor(shown.eventDensity || 0);
+    const targetFine = starCountFor(eventDensityFor(latestData.spaceWeather));
     while (fineParticles.length < targetFine) fineParticles.push(makeFineParticle());
     while (fineParticles.length > targetFine) fineParticles.pop();
 
@@ -810,7 +822,6 @@
     if (wind) shown.windKms = lerp(shown.windKms, wind.kms, 0.01);
     const auroraTarget = wind && wind.bz < -2 ? mapRange(-wind.bz, 2, 12, 0.35, 1) : 0;
     shown.aurora = lerp(shown.aurora, auroraTarget, 0.02);
-    shown.eventDensity = lerp(shown.eventDensity || 0, eventDensityFor(latestData.spaceWeather), 0.01);
 
     const elevated =
       latestData.spaceWeather.flareIntensity >= 1000 || latestData.spaceWeather.kpIndex >= 5;
