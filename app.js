@@ -201,6 +201,11 @@
     return Math.round(clamp(density * 0.5, 3, 8));
   }
 
+  // NASA logs Kp in thirds (5.67, 6.33, 7.33), so show one decimal at most.
+  function kpLabel(kp) {
+    return Number.isInteger(kp) ? String(kp) : kp.toFixed(1);
+  }
+
   function plural(n, one, many) {
     return `${n} ${n === 1 ? one : many}`;
   }
@@ -235,7 +240,7 @@
       const rows = [];
       if (stormCount > 0) {
         if (eventsLive) rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
-        rows.push(['Storm peak', `${sw.kpIndex} of 9`]);
+        rows.push(['Storm peak', `${kpLabel(sw.kpIndex)} of 9`]);
       }
       cards.push({
         label: 'Geomagnetic Activity', glyph: 'streak',
