@@ -268,8 +268,8 @@
       const count = latestData.asteroids.length;
       const hazardous = latestData.asteroids.filter((a) => a.hazardous).length;
       cards.push({
-        label: 'Orbiting dots', glyph: 'orbit',
-        value: count === 0 ? 'None Today' : plural(count, 'Asteroid', 'Asteroids'),
+        label: 'Asteroid tracker', glyph: 'orbit',
+        value: count === 0 ? 'None Today' : String(count),
         rows: count === 0 ? [] : [['Potentially hazardous', String(hazardous), hazardous > 0]],
       });
     }
@@ -822,7 +822,7 @@
   // sign moves to the next one:
   // APOD photo → EPIC Earth image → one Cosmic Meteorology slide per card
   // (shooting stars, solar wind, coronal mass ejections, aurora, solar flare strength,
-  // orbiting dots) → Algorithm Art → back to APOD. A card whose data source
+  // asteroid tracker) → Algorithm Art → back to APOD. A card whose data source
   // isn't live has no slide. Movement cuts in early: when the camera (see startCameraMotion) sees a new visitor — motion
   // after a few seconds of stillness — the sign advances right away and the
   // timer restarts. Continuous movement doesn't skip screens. Mouse/touch/
