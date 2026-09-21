@@ -233,18 +233,15 @@
     const eventsLive = status.flares === 'live' && status.cmes === 'live';
     const cards = [];
 
-    // Same shape as the coronal mass ejections card: a count with "This Week",
-    // and rows only when there is something to show.
+    // Same shape as the solar flare strength card: the strongest reading as the
+    // big value, and rows that are always there, even in a quiet week.
     if (sw && status.storms === 'live') {
       const stormCount = Number.isFinite(sw.stormCount) ? sw.stormCount : sw.kpIndex > 0 ? 1 : 0;
-      const rows = [];
-      if (stormCount > 0) {
-        if (eventsLive) rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
-        rows.push(['Storm peak', `${kpLabel(sw.kpIndex)} of 9`]);
-      }
+      const rows = [['Storms this week', String(stormCount)]];
+      if (eventsLive) rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
       cards.push({
         label: 'Geomagnetic Activity', glyph: 'streak',
-        value: stormCount === 0 ? 'None This Week' : `${plural(stormCount, 'Storm', 'Storms')} This Week`,
+        value: stormCount === 0 ? 'No Storms' : `Storm Level ${kpLabel(sw.kpIndex)} of 9`,
         rows,
       });
     }
