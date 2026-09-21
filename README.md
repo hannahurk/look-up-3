@@ -20,7 +20,7 @@ Each slide holds for 12–15 seconds (a random time in that range) — except th
 
 - **APOD** — full-bleed image or video, whichever picture NASA published today.
 - **EPIC** — the most recent full-disk photo of Earth from the DSCOVR satellite.
-- **Cosmic Meteorology (six slides)** — shown just before the art. Each slide is one large card in Title Case, with the live reading and an icon that matches that element of the art (all units and abbreviations are written out, e.g. "miles per hour", "nanotesla"): **geomagnetic activity** (the week's strongest storm out of 9, or "No Storms"; storms this week; solar events; how many shooting stars are shown, with a one-line reason: solar events add shooting stars and storms make them bigger and faster — the number on the card is exactly the number the art draws), **solar wind** (speed in mph and its pace), **coronal mass ejections** (how many, how many arcs are shown, how many are heading for Earth), **aurora glow** (watch or quiet, and the field tilt, Bz), **solar flare strength** (strongest flare, flare count — shown in the art as the glowing core) and **asteroid tracker** (how many asteroids pass close today, shown in the art as the orbiting dots, and how many are potentially hazardous). A card or row is skipped if its data source isn't live, and a card with no live data has no slide.
+- **Cosmic Meteorology (six slides)** — shown just before the art. Each slide is one large card in Title Case, with the live reading and an icon that matches that element of the art (all units and abbreviations are written out, e.g. "miles per hour", "nanotesla"): **geomagnetic activity** (the week's strongest storm out of 9, or "No Storms"; storms this week; solar events — and in the art, storms + solar events is exactly how many shooting stars there are), **solar wind** (speed in mph and its pace), **coronal mass ejections** (how many, how many arcs are shown, how many are heading for Earth), **aurora glow** (watch or quiet, and the field tilt, Bz), **solar flare strength** (strongest flare, flare count — shown in the art as the glowing core) and **asteroid tracker** (how many asteroids pass close today, shown in the art as the orbiting dots, and how many are potentially hazardous). A card or row is skipped if its data source isn't live, and a card with no live data has no slide.
 - **Algorithm Art** — see below.
 
 ## How the data reads as motion (Algorithm Art)
@@ -30,14 +30,14 @@ Each slide holds for 12–15 seconds (a random time in that range) — except th
 - **Solar wind speed** (live NOAA reading) sets how fast pale blue streaks flow outward from the glowing core — a faster wind visibly streams faster.
 - **Coronal mass ejections** (the most relevant recent eruptions) each become a wide, soft arc that expands outward from the core, like a cloud thrown off the Sun. A faster eruption crosses the screen sooner, and one predicted to reach Earth is drawn in amber instead of violet.
 - **Aurora watch** (the solar wind's magnetic field tilting south, Bz below −2 nT) hangs a green glow from the top of the sky; the further south the field, the stronger and deeper it gets. With the field northward there is no glow.
-- **Number of space-weather events** (flares + CMEs, plus a bump for any storm) sets shooting-star density.
+- **Storms this week + solar events** (flares + CMEs) is exactly how many shooting stars there are (capped at 60 so an extreme week stays readable). A quiet week with one flare has one shooting star.
 - **Each tracked asteroid** becomes one orbiting body.
   - Diameter → body size
   - Velocity → orbital speed
   - Miss distance → orbital radius
 - **Potentially hazardous asteroids**, and generally elevated conditions (an X-class flare or Kp ≥ 5), bring in a restrained amber tint — never a saturated warning color.
 
-Motion is deliberately gentle so the piece is comfortable to look up at for a long time: the orbiting dots drift (one lap every one to five minutes), shooting stars and wind streaks move slowly with only a handful on screen at once, CME arcs take 30–90 seconds to cross, and the twinkle and aurora sway are slow and soft. Nothing flashes, and everything slows further under `prefers-reduced-motion`.
+Motion is deliberately gentle so the piece is comfortable to look up at for a long time: the orbiting dots drift (one lap every one to five minutes), shooting stars and wind streaks move slowly, CME arcs take 30–90 seconds to cross, and the twinkle and aurora sway are slow and soft. Nothing flashes, and everything slows further under `prefers-reduced-motion`.
 
 Contrast: every meaningful mark keeps at least 3:1 contrast against the background at its blended strength (WCAG 1.4.11) — the orbit lines, core, aurora, arcs and streaks hold their strength for most of their travel and only fade at the very end. The twinkling background stars and soft halos are decorative.
 

@@ -191,14 +191,18 @@
     return null;
   }
 
-  // How busy the sky is (flares + CMEs, plus a bump for any storm) and how many
-  // shooting stars that puts on screen. Shared by the art and the card.
-  function eventDensityFor(sw) {
-    return mapRange(sw.flareCount + sw.cmeCount + (sw.kpIndex > 0 ? 6 : 0), 0, 30, 1, 16);
+  // The shooting stars in the art: one for every storm and every solar event
+  // (flare or coronal mass ejection) logged this week — the same two numbers
+  // the Geomagnetic Activity card shows. The ceiling only stops an extreme
+  // week from making the sky unreadable.
+  const MAX_SHOOTING_STARS = 60;
+
+  function stormCountOf(sw) {
+    return Number.isFinite(sw.stormCount) ? sw.stormCount : sw.kpIndex > 0 ? 1 : 0;
   }
 
-  function starCountFor(density) {
-    return Math.round(clamp(density * 0.5, 3, 8));
+  function shootingStarCount(sw) {
+    return Math.min(stormCountOf(sw) + sw.flareCount + sw.cmeCount, MAX_SHOOTING_STARS);
   }
 
   // NASA logs Kp in thirds (5.67, 6.33, 7.33), so show one decimal at most.
@@ -236,18 +240,13 @@
     // Same shape as the solar flare strength card: the strongest reading as the
     // big value, and rows that are always there, even in a quiet week.
     if (sw && status.storms === 'live') {
-      const stormCount = Number.isFinite(sw.stormCount) ? sw.stormCount : sw.kpIndex > 0 ? 1 : 0;
+      const stormCount = stormCountOf(sw);
       const rows = [['Storms this week', String(stormCount)]];
-      if (eventsLive) {
-        rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
-        rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
-      }
+      if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
       cards.push({
         label: 'Geomagnetic Activity', glyph: 'streak',
         value: sw.kpIndex > 0 ? `Storm Level ${kpLabel(sw.kpIndex)} of 9` : stormCount > 0 ? 'Storm Logged' : 'No Storms',
         rows,
-        // Why there are shooting stars at all, in one line.
-        note: 'Solar events add shooting stars. Storms make them bigger and faster.',
       });
     }
     const wind = currentWind();
@@ -337,13 +336,6 @@
         row.append(n, v);
         card.appendChild(row);
       });
-
-      if (c.note) {
-        const note = document.createElement('p');
-        note.className = 'fc-note';
-        note.textContent = c.note;
-        card.appendChild(note);
-      }
       box.appendChild(card);
     });
     showKeyCard();
@@ -793,7 +785,7 @@
     const geo = shown.geomagneticIntensity;
     const speed = mapRange(geo, 0, 1, 0.6, 2.2) * ui * (reduceMotion ? 0.3 : 1);
 
-    const targetFine = starCountFor(eventDensityFor(latestData.spaceWeather));
+    const targetFine = shootingStarCount(latestData.spaceWeather);
     while (fineParticles.length < targetFine) fineParticles.push(makeFineParticle());
     while (fineParticles.length > targetFine) fineParticles.pop();
 

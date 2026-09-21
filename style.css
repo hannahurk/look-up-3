@@ -193,15 +193,6 @@ body.mode-art #art {
 }
 
 .fc-row b { color: var(--paper); font-weight: 600; }
-
-/* One short line under a card's rows saying what the card is showing. */
-.fc-note {
-  margin: 0.8em 0 0;
-  font-size: clamp(12px, min(1.4vw, 2.6vh), 22px);
-  line-height: 1.4;
-  color: var(--slate);
-}
-.key-screen .fc-note { font-size: clamp(14px, min(2.1vw, 3.6vh), 32px); }
 .fc-row.is-warn b { color: var(--amber); }
 
 /* Each Cosmic Meteorology slide shows one card, large, and fades it in. */
