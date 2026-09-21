@@ -204,6 +204,7 @@ module.exports = async (req, res) => {
       cmeSpeed: averageCMESpeed(cmes),
       geomagneticIntensity: Math.min(kpIndex / 9, 1),
       kpIndex,
+      stormCount: storms.length,
     },
     cmes: recentCMEs(cmes),
     asteroids: neo ? normalizeAsteroids(neo) : [],

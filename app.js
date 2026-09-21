@@ -191,6 +191,16 @@
     return null;
   }
 
+  // How busy the sky is (flares + CMEs, plus a bump for any storm) and how many
+  // shooting stars that puts on screen. Shared by the art and the card.
+  function eventDensityFor(sw) {
+    return mapRange(sw.flareCount + sw.cmeCount + (sw.kpIndex > 0 ? 6 : 0), 0, 30, 1, 16);
+  }
+
+  function starCountFor(density) {
+    return Math.round(clamp(density * 0.5, 3, 8));
+  }
+
   function plural(n, one, many) {
     return `${n} ${n === 1 ? one : many}`;
   }
@@ -218,16 +228,20 @@
     const eventsLive = status.flares === 'live' && status.cmes === 'live';
     const cards = [];
 
-    if (sw && (status.storms === 'live' || eventsLive)) {
+    // Same shape as the coronal mass ejections card: a count with "This Week",
+    // and rows only when there is something to show.
+    if (sw && status.storms === 'live') {
+      const stormCount = Number.isFinite(sw.stormCount) ? sw.stormCount : sw.kpIndex > 0 ? 1 : 0;
       const rows = [];
-      let value = null;
-      if (status.storms === 'live') {
-        const intensity = sw.geomagneticIntensity || 0;
-        value = intensity < 0.15 ? 'Small and Slow' : intensity < 0.6 ? 'Medium' : 'Long and Fast';
-        rows.push(['Storm peak', sw.kpIndex > 0 ? `${sw.kpIndex} of 9` : 'None']);
+      if (stormCount > 0) {
+        if (eventsLive) rows.push(['Shooting stars shown', String(starCountFor(eventDensityFor(sw)))]);
+        rows.push(['Storm peak', `${sw.kpIndex} of 9`]);
       }
-      if (eventsLive) rows.push(['Solar events', String(sw.flareCount + sw.cmeCount)]);
-      cards.push({ label: 'Geomagnetic Activity', glyph: 'streak', value, rows });
+      cards.push({
+        label: 'Geomagnetic Activity', glyph: 'streak',
+        value: stormCount === 0 ? 'None This Week' : `${plural(stormCount, 'Storm', 'Storms')} This Week`,
+        rows,
+      });
     }
     const wind = currentWind();
     if (wind) {
@@ -765,7 +779,7 @@
     const geo = shown.geomagneticIntensity;
     const speed = mapRange(geo, 0, 1, 0.6, 2.2) * ui * (reduceMotion ? 0.3 : 1);
 
-    const targetFine = Math.round(clamp((shown.eventDensity || 0) * 0.5, 3, 8));
+    const targetFine = starCountFor(shown.eventDensity || 0);
     while (fineParticles.length < targetFine) fineParticles.push(makeFineParticle());
     while (fineParticles.length > targetFine) fineParticles.pop();
 
@@ -794,9 +808,7 @@
     if (wind) shown.windKms = lerp(shown.windKms, wind.kms, 0.01);
     const auroraTarget = wind && wind.bz < -2 ? mapRange(-wind.bz, 2, 12, 0.35, 1) : 0;
     shown.aurora = lerp(shown.aurora, auroraTarget, 0.02);
-    const eventDensityTarget =
-      latestData.spaceWeather.flareCount + latestData.spaceWeather.cmeCount + (latestData.spaceWeather.kpIndex > 0 ? 6 : 0);
-    shown.eventDensity = lerp(shown.eventDensity || 0, mapRange(eventDensityTarget, 0, 30, 1, 16), 0.01);
+    shown.eventDensity = lerp(shown.eventDensity || 0, eventDensityFor(latestData.spaceWeather), 0.01);
 
     const elevated =
       latestData.spaceWeather.flareIntensity >= 1000 || latestData.spaceWeather.kpIndex >= 5;
