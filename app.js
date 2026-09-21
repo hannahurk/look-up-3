@@ -429,11 +429,19 @@
   }
 
   function coreCenter() {
-    return { x: width * 0.44, y: height * 0.47 };
+    // Off-centre on tall/square screens; centred on a wide (horizontal) sign.
+    const wide = clamp((width / height - 1) / 0.78, 0, 1);
+    return { x: width * (0.44 + 0.06 * wide), y: height * 0.47 };
   }
+
+  // On a wide sign the orbits are stretched sideways so they use the width
+  // instead of huddling in the middle.
+  let orbitStretch = 1;
 
   function rebuildOrbits(asteroids) {
     const maxRadius = Math.min(width, height) * 0.46;
+    const c = coreCenter();
+    orbitStretch = clamp((0.92 * Math.min(c.x, width - c.x)) / maxRadius, 1, 1.8);
     const minRadius = Math.min(width, height) * 0.14;
 
     const missDistances = asteroids.map((a) => a.missDistance).filter((v) => v > 0);
@@ -545,7 +553,7 @@
     const cos = Math.cos(orbit.tilt);
     const sin = Math.sin(orbit.tilt);
     return {
-      x: center.x + x0 * cos - y0 * sin,
+      x: center.x + (x0 * cos - y0 * sin) * orbitStretch,
       y: center.y + x0 * sin + y0 * cos,
     };
   }
@@ -554,6 +562,7 @@
     for (const orbit of orbits) {
       ctx.save();
       ctx.translate(center.x, center.y);
+      ctx.scale(orbitStretch, 1);
       ctx.rotate(orbit.tilt);
       ctx.scale(1, orbit.eccentricity);
       ctx.beginPath();
