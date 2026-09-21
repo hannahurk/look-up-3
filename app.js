@@ -259,7 +259,7 @@
     if (sw && status.flares === 'live') {
       const strongest = strongestFlareClass(sw.flareIntensity);
       cards.push({
-        label: 'Glowing core', glyph: 'core',
+        label: 'Solar flare strength', glyph: 'core',
         value: strongest ? `${strongest} Flare` : 'No Flares',
         rows: [['Flares this week', String(sw.flareCount)]],
       });
@@ -821,7 +821,7 @@
   // Each slide holds for 12-15 seconds (random within that range), then the
   // sign moves to the next one:
   // APOD photo → EPIC Earth image → one Cosmic Meteorology slide per card
-  // (shooting stars, solar wind, coronal mass ejections, aurora, glowing core,
+  // (shooting stars, solar wind, coronal mass ejections, aurora, solar flare strength,
   // orbiting dots) → Algorithm Art → back to APOD. A card whose data source
   // isn't live has no slide. Movement cuts in early: when the camera (see startCameraMotion) sees a new visitor — motion
   // after a few seconds of stillness — the sign advances right away and the
