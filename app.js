@@ -818,8 +818,9 @@
 
   // ---------- slide cycle ----------
   //
-  // Each slide holds for 12-15 seconds (random within that range), then the
-  // sign moves to the next one:
+  // Each slide holds for 12-15 seconds (random within that range), except the
+  // artwork, which always holds a full 20 seconds, then the sign moves to the
+  // next one:
   // APOD photo → EPIC Earth image → one Cosmic Meteorology slide per card
   // (geomagnetic activity, solar wind, coronal mass ejections, aurora, solar flare strength,
   // asteroid tracker) → Algorithm Art → back to APOD. A card whose data source
@@ -830,9 +831,10 @@
 
   const SLIDE_DWELL_MIN_MS = 12000; // every slide holds 12-15 s unless a visitor arrives
   const SLIDE_DWELL_MAX_MS = 15000;
-  // The artwork always gets the full 15 s; every other slide is a random 12-15 s.
+  const ART_DWELL_MS = 20000; // the artwork always gets a full 20 s
+  // Every other slide is a random 12-15 s.
   const nextDwell = () =>
-    mode === 'art' ? SLIDE_DWELL_MAX_MS : SLIDE_DWELL_MIN_MS + Math.random() * (SLIDE_DWELL_MAX_MS - SLIDE_DWELL_MIN_MS);
+    mode === 'art' ? ART_DWELL_MS : SLIDE_DWELL_MIN_MS + Math.random() * (SLIDE_DWELL_MAX_MS - SLIDE_DWELL_MIN_MS);
   let dwellTimer;
   let mode = 'apod';
 
